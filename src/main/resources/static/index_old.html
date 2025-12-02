@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Security Agent - Vulnerability Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+        }
+        
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .status-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .status-card h3 {
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .status-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .status-card.online .value {
+            color: #10b981;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            background: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            background: #f3f4f6;
+        }
+        
+        .tab.active {
+            background: white;
+            font-weight: bold;
+            color: #667eea;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 0 10px 10px 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 500px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        textarea, input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 15px;
+        }
+        
+        textarea {
+            min-height: 300px;
+            resize: vertical;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results {
+            margin-top: 30px;
+        }
+        
+        .finding {
+            background: #f9fafb;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        
+        .finding.critical {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        
+        .finding.high {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+        
+        .finding.medium {
+            border-left-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .finding.low {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+        
+        .finding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .finding-title {
+            font-weight: bold;
+            font-size: 18px;
+            color: #1f2937;
+        }
+        
+        .severity-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .severity-badge.critical {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .severity-badge.high {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .severity-badge.medium {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .severity-badge.low {
+            background: #10b981;
+            color: white;
+        }
+        
+        .finding-description {
+            color: #4b5563;
+            margin-bottom: 10px;
+        }
+        
+        .finding-meta {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+        
+        .recommendations {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .recommendations h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .recommendations ul {
+            margin-left: 20px;
+        }
+        
+        .recommendations li {
+            color: #4b5563;
+            margin-bottom: 5px;
+        }
+        
+        .file-upload {
+            border: 2px dashed #d1d5db;
+            padding: 40px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .file-upload:hover {
+            border-color: #667eea;
+            background: #f9fafb;
+        }
+        
+        .file-upload input {
+            display: none;
+        }
+        
+        .loader {
+            border: 5px solid #f3f4f6;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .agent-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .agent-card {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .agent-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .agent-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+            margin-right: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #374151;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .summary-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-box h3 {
+            margin-bottom: 15px;
+        }
+        
+        .summary-stats {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .summary-stat {
+            text-align: center;
+        }
+        
+        .summary-stat .number {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        
+        .summary-stat .label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ AI Security Agent</h1>
+            <p>Advanced Vulnerability Detection & Automated Response System</p>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-card online">
+                <h3>System Status</h3>
+                <div class="value" id="systemStatus">ONLINE</div>
+            </div>
+            <div class="status-card">
+                <h3>Active Agents</h3>
+                <div class="value" id="activeAgents">0</div>
+            </div>
+            <div class="status-card">
+                <h3>Total Scans</h3>
+                <div class="value" id="totalScans">0</div>
+            </div>
+            <div class="status-card">
+                <h3>Threats Blocked</h3>
+                <div class="value" id="threatsBlocked">0</div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('code')">Code Analysis</button>
+            <button class="tab" onclick="switchTab('file')">File Upload</button>
+            <button class="tab" onclick="switchTab('network')">Network Analysis</button>
+            <button class="tab" onclick="switchTab('agents')">Agent Status</button>
+        </div>
+        
+        <div class="content">
+            <div id="code-tab" class="tab-content active">
+                <h2>Analyze Code Snippet</h2>
+                <p style="color: #6b7280; margin-bottom: 20px;">Paste your Java code below for real-time vulnerability detection</p>
+                
+                <textarea id="codeInput" placeholder="public class Example {
+    public void unsafeMethod(String userInput) {
+        String query = &quot;SELECT * FROM users WHERE id = &quot; + userInput;
+        // SQL Injection vulnerability!
+    }
+}"></textarea>
+                
+                <button onclick="analyzeCode()" id="analyzeCodeBtn">🔍 Analyze Code</button>
+                
+                <div id="codeResults" class="results"></div>
+            </div>
+            
+            <div id="file-tab" class="tab-content">
+                <h2>Upload Java File</h2>
+                <p style="color: #6b7280; margin-bottom: 20px;">Upload a .java file for comprehensive security analysis</p>
+                
+                <div class="file-upload" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" accept=".java" onchange="handleFileSelect(event)">
+                    <p style="font-size: 48px; margin-bottom: 10px;">📁</p>
+                    <p style="color: #6b7280;"><strong>Click to select</strong> or drag and drop a .java file</p>
+                    <p id="fileName" style="color: #667eea; margin-top: 10px;"></p>
+                </div>
+                
+                <button onclick="analyzeFile()" id="analyzeFileBtn" disabled>🔍 Analyze File</button>
+                
+                <div id="fileResults" class="results"></div>
+            </div>
+            
+            <div id="network-tab" class="tab-content">
+                <h2>Network Request Analysis</h2>
+                <p style="color: #6b7280; margin-bottom: 20px;">Analyze network requests for security threats</p>
+                
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Protocol</label>
+                        <input type="text" id="protocol" placeholder="http" value="http">
+                    </div>
+                    <div class="form-group">
+                        <label>Host</label>
+                        <input type="text" id="host" placeholder="example.com" value="suspicious-domain.ru">
+                    </div>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Port</label>
+                        <input type="number" id="port" placeholder="80" value="80">
+                    </div>
+                    <div class="form-group">
+                        <label>Path</label>
+                        <input type="text" id="path" placeholder="/api/endpoint" value="/api/data">
+                    </div>
+                </div>
+                
+                <button onclick="analyzeNetwork()">🔍 Analyze Network Request</button>
+                
+                <div id="networkResults" class="results"></div>
+            </div>
+            
+            <div id="agents-tab" class="tab-content">
+                <h2>Security Agents Status</h2>
+                <p style="color: #6b7280; margin-bottom: 20px;">Monitor all active security agents</p>
+                
+                <div id="agentList" class="agent-list"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8080/api/security';
+        let selectedFile = null;
+        
+        // Load initial status
+        loadSystemStatus();
+        setInterval(loadSystemStatus, 5000);
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+            
+            if (tab === 'agents') {
+                loadAgents();
+            }
+        }
+        
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const data = await response.json();
+                
+                document.getElementById('systemStatus').textContent = data.status;
+                document.getElementById('activeAgents').textContent = data.activeAgents;
+            } catch (error) {
+                console.error('Error loading status:', error);
+                document.getElementById('systemStatus').textContent = 'OFFLINE';
+            }
+        }
+        
+        async function analyzeCode() {
+            const code = document.getElementById('codeInput').value;
+            if (!code.trim()) {
+                alert('Please enter some code to analyze');
+                return;
+            }
+            
+            const btn = document.getElementById('analyzeCodeBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Analyzing...';
+            
+            const resultsDiv = document.getElementById('codeResults');
+            resultsDiv.innerHTML = '<div class="loader"></div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/analyze/code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code, filename: 'UserCode.java' })
+                });
+                
+                const data = await response.json();
+                displayResults(data, resultsDiv);
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="finding critical">
+                    <div class="finding-header">
+                        <div class="finding-title">❌ Error</div>
+                    </div>
+                    <div class="finding-description">Failed to analyze code: ${error.message}</div>
+                </div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔍 Analyze Code';
+            }
+        }
+        
+        function handleFileSelect(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                document.getElementById('fileName').textContent = `Selected: ${selectedFile.name}`;
+                document.getElementById('analyzeFileBtn').disabled = false;
+            }
+        }
+        
+        async function analyzeFile() {
+            if (!selectedFile) return;
+            
+            const btn = document.getElementById('analyzeFileBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Analyzing...';
+            
+            const resultsDiv = document.getElementById('fileResults');
+            resultsDiv.innerHTML = '<div class="loader"></div>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                
+                const response = await fetch(`${API_BASE}/analyze/file`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                displayResults(data, resultsDiv);
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="finding critical">
+                    <div class="finding-header">
+                        <div class="finding-title">❌ Error</div>
+                    </div>
+                    <div class="finding-description">Failed to analyze file: ${error.message}</div>
+                </div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔍 Analyze File';
+            }
+        }
+        
+        async function analyzeNetwork() {
+            const protocol = document.getElementById('protocol').value;
+            const host = document.getElementById('host').value;
+            const port = document.getElementById('port').value;
+            const path = document.getElementById('path').value;
+            
+            const resultsDiv = document.getElementById('networkResults');
+            resultsDiv.innerHTML = '<div class="loader"></div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/analyze/network`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ protocol, host, port: parseInt(port), path })
+                });
+                
+                const data = await response.json();
+                displayResults(data, resultsDiv);
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="finding critical">
+                    <div class="finding-header">
+                        <div class="finding-title">❌ Error</div>
+                    </div>
+                    <div class="finding-description">Failed to analyze network request: ${error.message}</div>
+                </div>`;
+            }
+        }
+        
+        function displayResults(data, container) {
+            if (!data.findings || data.findings.length === 0) {
+                container.innerHTML = `<div class="finding low">
+                    <div class="finding-header">
+                        <div class="finding-title">✅ No Vulnerabilities Found</div>
+                    </div>
+                    <div class="finding-description">The analysis completed successfully with no security issues detected.</div>
+                </div>`;
+                return;
+            }
+            
+            let html = `<div class="summary-box">
+                <h3>Analysis Summary</h3>
+                <div class="summary-stats">
+                    <div class="summary-stat">
+                        <div class="number">${data.totalFindings}</div>
+                        <div class="label">Total Findings</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="number">${data.criticalCount}</div>
+                        <div class="label">Critical</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="number">${data.highCount}</div>
+                        <div class="label">High</div>
+                    </div>
+                </div>
+            </div>`;
+            
+            data.findings.forEach(finding => {
+                const severity = finding.severity.toLowerCase();
+                html += `<div class="finding ${severity}">
+                    <div class="finding-header">
+                        <div class="finding-title">${finding.category}</div>
+                        <span class="severity-badge ${severity}">${finding.severity}</span>
+                    </div>
+                    <div class="finding-description">${finding.description}</div>
+                    <div class="finding-meta">
+                        📍 Location: ${finding.location}<br>
+                        🎯 Confidence: ${(finding.confidence * 100).toFixed(0)}%
+                    </div>
+                    ${finding.recommendations && finding.recommendations.length > 0 ? `
+                    <div class="recommendations">
+                        <h4>💡 Recommendations</h4>
+                        <ul>
+                            ${finding.recommendations.map(r => `<li>${r}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        async function loadAgents() {
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const data = await response.json();
+                
+                const container = document.getElementById('agentList');
+                container.innerHTML = data.agents.map(agent => `
+                    <div class="agent-card">
+                        <h3><span class="agent-status"></span> ${agent.type}</h3>
+                        <p><strong>Status:</strong> ${agent.status}</p>
+                        <p><strong>Health:</strong> ${agent.health}</p>
+                        <p style="font-size: 12px; color: #6b7280; margin-top: 10px;">ID: ${agent.agentId}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading agents:', error);
+            }
+        }
+    </script>
+</body>
+</html>

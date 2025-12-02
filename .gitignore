@@ -1,0 +1,17 @@
+.DS_Store
+.idea/
+*.iml
+target/
+*.log
+logs/
+scan-results.*
+*.class
+*.jar
+.vscode/
+.settings/
+.project
+.classpath
+dependency-check-report.html
+*.tmp
+*.bak
+node_modules/

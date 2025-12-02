@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaShield - AI-Powered Security Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --border: #e2e8f0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header Styles */
+        .app-header {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            padding: 24px 32px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .app-logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .app-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+        
+        .app-title p {
+            font-size: 14px;
+            color: var(--gray);
+            font-weight: 500;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-outline {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--border);
+        }
+        
+        .btn-outline:hover {
+            border-color: var(--primary);
+            background: var(--light);
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+        
+        .stat-change {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .stat-change.positive {
+            color: var(--success);
+        }
+        
+        .stat-change.negative {
+            color: var(--danger);
+        }
+        
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .card-subtitle {
+            font-size: 14px;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+        
+        .card-body {
+            padding: 24px;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--border);
+            padding: 0 24px;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            border: none;
+            background: none;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--gray);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+            bottom: -2px;
+        }
+        
+        .tab:hover {
+            color: var(--primary);
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Code Editor */
+        .code-editor {
+            width: 100%;
+            min-height: 300px;
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+            background: var(--light);
+        }
+        
+        .code-editor:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* File Upload */
+        .upload-zone {
+            border: 3px dashed var(--border);
+            border-radius: 12px;
+            padding: 48px 24px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            background: var(--light);
+        }
+        
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        .upload-zone.drag-over {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+        
+        .upload-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+        
+        .upload-hint {
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        /* Form Input */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+        
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        /* Results */
+        .results-container {
+            margin-top: 24px;
+        }
+        
+        .finding-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+        }
+        
+        .finding-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .finding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .finding-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--dark);
+        }
+        
+        .severity-badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .severity-critical {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .severity-high {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+        
+        .severity-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .severity-low {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        /* Agent Cards */
+        .agents-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        .agent-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .agent-card:hover {
+            transform: translateX(4px);
+            border-color: var(--primary);
+        }
+        
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .agent-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .agent-info h4 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .agent-status {
+            font-size: 13px;
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .agent-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .agent-meta-item {
+            font-size: 12px;
+        }
+        
+        .agent-meta-label {
+            color: var(--gray);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .agent-meta-value {
+            color: var(--dark);
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        /* Loading State */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Alert Messages */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #6ee7b7;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #fca5a5;
+        }
+        
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 2px solid #93c5fd;
+        }
+        
+        /* Hidden class */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Footer */
+        .app-footer {
+            text-align: center;
+            padding: 24px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="app-logo">
+                <div class="logo-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="app-title">
+                    <h1>JavaShield</h1>
+                    <p>AI-Powered Security & Vulnerability Detection Platform</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="btn btn-primary" onclick="window.location.href='#code-analysis'">
+                    <i class="fas fa-code"></i> Analyze Code
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-label">System Status</div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="system-status">Online</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> All systems operational
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-label">Active Agents</div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="active-agents">0</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-check"></i> Ready to analyze
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-label">Total Scans</div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="total-scans">0</div>
+                <div class="stat-change">
+                    <i class="fas fa-clock"></i> Last scan: Recently
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-label">Threats Blocked</div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white;">
+                        <i class="fas fa-shield-virus"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="threats-blocked">0</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-check"></i> Protected
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Analysis Panel -->
+            <div class="content-card">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('code-analysis')">
+                        <i class="fas fa-code"></i> Code Analysis
+                    </button>
+                    <button class="tab" onclick="switchTab('file-upload')">
+                        <i class="fas fa-file-upload"></i> File Upload
+                    </button>
+                    <button class="tab" onclick="switchTab('network-scan')">
+                        <i class="fas fa-network-wired"></i> Network Scan
+                    </button>
+                </div>
+
+                <!-- Code Analysis Tab -->
+                <div id="code-analysis" class="tab-content active">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-file-code"></i> Paste Your Java Code
+                            </label>
+                            <textarea 
+                                id="code-input" 
+                                class="code-editor" 
+                                placeholder="public class Example {&#10;    public void unsafeMethod(String userInput) {&#10;        String query = &quot;SELECT * FROM users WHERE id = &quot; + userInput;&#10;        // SQL Injection vulnerability!&#10;    }&#10;}">public class Example {
+    public void unsafeMethod(String userInput) {
+        String query = "SELECT * FROM users WHERE id = " + userInput;
+        // SQL Injection vulnerability!
+    }
+}</textarea>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" onclick="analyzeCode()">
+                            <i class="fas fa-play"></i> Analyze Code
+                        </button>
+                        <div id="code-results" class="results-container"></div>
+                    </div>
+                </div>
+
+                <!-- File Upload Tab -->
+                <div id="file-upload" class="tab-content">
+                    <div class="card-body">
+                        <div class="upload-zone" id="upload-zone">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="upload-text">Drop your Java file here or click to browse</div>
+                            <div class="upload-hint">Supports .java files up to 10MB</div>
+                            <input type="file" id="file-input" style="display: none;" accept=".java" onchange="handleFileSelect(event)">
+                        </div>
+                        <div id="file-results" class="results-container"></div>
+                    </div>
+                </div>
+
+                <!-- Network Scan Tab -->
+                <div id="network-scan" class="tab-content">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-globe"></i> Protocol</label>
+                            <select id="network-protocol" class="form-select">
+                                <option value="HTTP">HTTP</option>
+                                <option value="HTTPS" selected>HTTPS</option>
+                                <option value="FTP">FTP</option>
+                                <option value="SSH">SSH</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-server"></i> Host</label>
+                            <input type="text" id="network-host" class="form-input" placeholder="example.com" value="example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-plug"></i> Port</label>
+                            <input type="number" id="network-port" class="form-input" placeholder="443" value="443">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-route"></i> Path</label>
+                            <input type="text" id="network-path" class="form-input" placeholder="/api/endpoint" value="/api/v1/data">
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" onclick="analyzeNetwork()">
+                            <i class="fas fa-satellite-dish"></i> Scan Network
+                        </button>
+                        <div id="network-results" class="results-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Status Sidebar -->
+            <div class="content-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-robot"></i> Security Agents
+                    </div>
+                    <div class="card-subtitle">Real-time agent monitoring</div>
+                </div>
+                <div class="card-body">
+                    <div id="agents-container" class="agents-grid">
+                        <div class="alert alert-info">
+                            <i class="fas fa-sync-alt loading"></i>
+                            Loading agents...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>JavaShield v1.0.0 - Powered by AI & Machine Learning | Java 25 | Spring Boot 3.4.0</p>
+        </footer>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.closest('.tab').classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Load system status
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('/api/security/status');
+                const data = await response.json();
+                
+                document.getElementById('active-agents').textContent = data.agentCount || 0;
+                document.getElementById('system-status').textContent = data.status || 'Online';
+                
+                // Load agents
+                const agentsContainer = document.getElementById('agents-container');
+                agentsContainer.innerHTML = '';
+                
+                if (data.agents && data.agents.length > 0) {
+                    data.agents.forEach(agent => {
+                        const agentCard = document.createElement('div');
+                        agentCard.className = 'agent-card';
+                        agentCard.innerHTML = `
+                            <div class="agent-header">
+                                <div class="agent-icon">
+                                    <i class="fas ${getAgentIcon(agent.type)}"></i>
+                                </div>
+                                <div class="agent-info">
+                                    <h4>${formatAgentType(agent.type)}</h4>
+                                    <div class="agent-status">
+                                        <i class="fas fa-circle" style="font-size: 8px;"></i> ${agent.status}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="agent-meta">
+                                <div class="agent-meta-item">
+                                    <div class="agent-meta-label">Health</div>
+                                    <div class="agent-meta-value">${Math.round(agent.health * 100)}%</div>
+                                </div>
+                                <div class="agent-meta-item">
+                                    <div class="agent-meta-label">ID</div>
+                                    <div class="agent-meta-value">${agent.agentId.substring(0, 8)}</div>
+                                </div>
+                            </div>
+                        `;
+                        agentsContainer.appendChild(agentCard);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading status:', error);
+                document.getElementById('agents-container').innerHTML = `
+                    <div class="alert alert-error">
+                        <i class="fas fa-exclamation-triangle"></i> Failed to load agents
+                    </div>
+                `;
+            }
+        }
+
+        // Analyze code
+        async function analyzeCode() {
+            const code = document.getElementById('code-input').value;
+            const resultsDiv = document.getElementById('code-results');
+            
+            resultsDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-sync-alt loading"></i> Analyzing code...</div>';
+            
+            try {
+                const response = await fetch('/api/security/analyze/code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code, filename: 'Example.java' })
+                });
+                
+                const result = await response.json();
+                displayResults(result, resultsDiv);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="alert alert-error"><i class="fas fa-times-circle"></i> Analysis failed: ${error.message}</div>`;
+            }
+        }
+
+        // Analyze network
+        async function analyzeNetwork() {
+            const protocol = document.getElementById('network-protocol').value;
+            const host = document.getElementById('network-host').value;
+            const port = document.getElementById('network-port').value;
+            const path = document.getElementById('network-path').value;
+            const resultsDiv = document.getElementById('network-results');
+            
+            resultsDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-sync-alt loading"></i> Scanning network...</div>';
+            
+            try {
+                const response = await fetch('/api/security/analyze/network', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ protocol, host, port: parseInt(port), path })
+                });
+                
+                const result = await response.json();
+                displayResults(result, resultsDiv);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="alert alert-error"><i class="fas fa-times-circle"></i> Scan failed: ${error.message}</div>`;
+            }
+        }
+
+        // File upload handling
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('drag-over');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            handleFileSelect({target: {files: e.dataTransfer.files}});
+        });
+
+        async function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const resultsDiv = document.getElementById('file-results');
+            resultsDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-sync-alt loading"></i> Analyzing file...</div>';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/security/analyze/file', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                displayResults(result, resultsDiv);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="alert alert-error"><i class="fas fa-times-circle"></i> Analysis failed: ${error.message}</div>`;
+            }
+        }
+
+        // Display results
+        function displayResults(result, container) {
+            if (!result.findings || result.findings.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> No vulnerabilities detected! Code looks secure.
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-triangle"></i> Found ${result.totalFindings} finding(s) - ${result.criticalCount} critical, ${result.highCount} high
+                </div>
+            `;
+            
+            result.findings.forEach(finding => {
+                html += `
+                    <div class="finding-card">
+                        <div class="finding-header">
+                            <div class="finding-title">${finding.category}</div>
+                            <span class="severity-badge severity-${finding.severity.toLowerCase()}">${finding.severity}</span>
+                        </div>
+                        <p style="color: var(--gray); margin-bottom: 12px;">${finding.description}</p>
+                        <div style="font-size: 13px; color: var(--gray);">
+                            <strong>Location:</strong> ${finding.location} | 
+                            <strong>Confidence:</strong> ${Math.round(finding.confidence * 100)}%
+                        </div>
+                        ${finding.recommendations && finding.recommendations.length > 0 ? `
+                            <div style="margin-top: 12px; padding: 12px; background: var(--light); border-radius: 8px;">
+                                <strong style="color: var(--dark); display: block; margin-bottom: 8px;">
+                                    <i class="fas fa-lightbulb"></i> Recommendations:
+                                </strong>
+                                <ul style="margin: 0; padding-left: 20px;">
+                                    ${finding.recommendations.map(rec => `<li style="color: var(--gray); margin-bottom: 4px;">${rec}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Helper functions
+        function getAgentIcon(type) {
+            const icons = {
+                'STATIC_ANALYZER': 'fa-search-plus',
+                'DYNAMIC_ANALYZER': 'fa-bolt',
+                'ML_CLASSIFIER': 'fa-brain',
+                'RESPONSE_HANDLER': 'fa-shield-alt'
+            };
+            return icons[type] || 'fa-robot';
+        }
+
+        function formatAgentType(type) {
+            return type.split('_').map(word => 
+                word.charAt(0) + word.slice(1).toLowerCase()
+            ).join(' ');
+        }
+
+        function refreshData() {
+            loadSystemStatus();
+        }
+
+        // Auto-refresh every 5 seconds
+        setInterval(loadSystemStatus, 5000);
+
+        // Initial load
+        loadSystemStatus();
+    </script>
+</body>
+</html>
