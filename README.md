@@ -1,12 +1,16 @@
-# AI Agent for Vulnerability Detection, Handling and Blocking
-## Java 25 - Advanced Security Automation System
+# JavaShield - AI Security Platform
+## Java 25 + Spring Boot 3.4 - Advanced Security Automation System
 
 [![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://jdk.java.net/25/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-javashild-blue.svg)](https://github.com/maaahhdiii/javashild)
 
 ## 🎯 Overview
 
-An intelligent AI-driven security system that automatically detects, analyzes, handles, and blocks security vulnerabilities in real-time. Built with Java 25, leveraging virtual threads, structured concurrency, and machine learning for autonomous security management.
+JavaShield is an intelligent AI-driven security platform that automatically detects, analyzes, handles, and blocks security vulnerabilities in real-time. Built with Java 25 and Spring Boot 3.4, leveraging virtual threads, structured concurrency, and machine learning for autonomous security management.
+
+**🌐 Web Interface Available** - Professional web-based UI for interactive security analysis and monitoring!
 
 ## ✨ Key Features
 
@@ -27,6 +31,14 @@ An intelligent AI-driven security system that automatically detects, analyzes, h
 - Automated alerting system
 - Auto-remediation capabilities
 - Quarantine mechanisms
+
+### 🌐 Professional Web Interface
+- Modern, responsive UI with Inter font
+- Real-time agent monitoring dashboard
+- Interactive code analysis
+- File upload with drag-and-drop
+- Network security scanning
+- Live vulnerability detection results
 
 ### 🔄 CI/CD Integration
 - Jenkins pipeline support
@@ -67,38 +79,50 @@ An intelligent AI-driven security system that automatically detects, analyzes, h
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Java 25 or later (with preview features enabled)
-- Maven 3.9+
+- **Java 25** (with preview features enabled) - [Download here](https://jdk.java.net/25/)
+- **Maven 3.9+**
 - Network access for vulnerability database queries (optional)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/vulnerability-detection-agent.git
-cd vulnerability-detection-agent
-
-# Build the project
-mvn clean package
-
-# Run the demo
-java --enable-preview -jar target/vulnerability-detection-agent-1.0.0.jar
+git clone https://github.com/maaahhdiii/javashild.git
+cd javashild
 ```
 
-### Quick Start
+### Quick Start - Windows
+
+**Option 1: One-Click Launch** (Recommended)
+```batch
+# Double-click or run in terminal:
+run.bat
+```
+
+**Option 2: Interactive Menu**
+```batch
+# Launch interactive menu with multiple options:
+start.bat
+```
+
+### Quick Start - Manual
 
 ```bash
-# Run full demo with all agents
-java --enable-preview -jar vulnerability-detection-agent.jar
+# Build the project
+mvn clean package -DskipTests
 
-# Scan a specific project
-java --enable-preview -jar vulnerability-detection-agent.jar --scan --path /path/to/project
+# Run the web application
+mvn spring-boot:run
 
-# Generate CI/CD configurations
-java --enable-preview -jar vulnerability-detection-agent.jar --cicd
+# Access the web interface
+# Open browser: http://localhost:8080
+```
 
-# Start live security monitoring
-java --enable-preview -jar vulnerability-detection-agent.jar --monitor
+### Command-Line Demo
+
+```bash
+# Run CLI demo with all 4 agents
+java --enable-preview -cp target/vulnerability-detection-agent-1.0.0.jar com.security.ai.SecurityAgentDemo
 ```
 
 ## 💻 Usage Examples
@@ -224,27 +248,19 @@ Create `agent-config.json`:
 ## 📈 Performance Benchmarks
 
 | Operation | Time (avg) | Throughput |
-|-----------|------------|------------|
-| Static Analysis | 45ms/file | ~22 files/sec |
-| Dynamic Analysis | 5ms/event | ~200 events/sec |
-| ML Classification | 12ms/finding | ~83 findings/sec |
-| Vulnerability DB Query | 150ms | ~6.6 queries/sec |
-
-*Benchmarked on: Java 25, 8 cores, 16GB RAM*
-
 ## 🛠️ Technology Stack
 
 - **Java 25**: Virtual threads, structured concurrency, pattern matching
+- **Spring Boot 3.4.0**: Web framework, REST API, embedded Tomcat
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+), Font Awesome
 - **ML Framework**: Tribuo 4.3.1
 - **Static Analysis**: SpotBugs, PMD, JavaParser
 - **Vulnerability DB**: NVD API, OWASP Dependency-Check
-- **Build Tool**: Maven
-- **Logging**: SLF4J + Logback
-
+- **Build Tool**: Maven 3.9+
 ## 🔬 Project Structure
 
 ```
-vulnerability-detection-agent/
+javashild/
 ├── src/main/java/com/security/ai/
 │   ├── agent/                      # Core agent framework
 │   │   ├── SecurityAgent.java
@@ -253,6 +269,25 @@ vulnerability-detection-agent/
 │   ├── analysis/
 │   │   ├── staticanalysis/        # Static code analysis
 │   │   └── dynamicanalysis/       # Runtime analysis
+│   ├── ml/                        # ML classification
+│   ├── response/                  # Automated response
+│   ├── vulnerabilitydb/          # Vulnerability databases
+│   ├── integration/              # CI/CD integration
+│   ├── web/                      # Spring Boot web application
+│   │   ├── SecurityAgentWebApplication.java
+│   │   ├── controller/           # REST API controllers
+│   │   └── dto/                  # Data transfer objects
+│   └── SecurityAgentDemo.java    # CLI demo application
+├── src/main/resources/
+│   ├── application.properties    # Spring Boot configuration
+│   ├── logback.xml              # Logging configuration
+│   └── static/
+│       └── index.html           # Professional web UI
+├── run.bat                      # One-click launcher (Windows)
+├── start.bat                    # Interactive menu (Windows)
+├── pom.xml                      # Maven configuration
+└── README.md                    # This file
+``` │   └── dynamicanalysis/       # Runtime analysis
 │   ├── ml/                        # ML classification
 │   ├── response/                  # Automated response
 │   ├── vulnerabilitydb/          # Vulnerability databases
@@ -266,22 +301,48 @@ vulnerability-detection-agent/
 
 ## 🧪 Testing
 
-```bash
-# Run all tests
-mvn test
+## 🌐 Web Interface Features
 
-# Run specific test
-mvn test -Dtest=StaticAnalysisAgentTest
+Access the professional web UI at `http://localhost:8080` after starting the application:
 
-# Run with coverage
-mvn test jacoco:report
+### Dashboard
+- **Real-time Statistics**: Active agents, total scans, threats blocked
+- **System Health**: Live agent status monitoring
+- **4 Security Agents**: Static Analyzer, Dynamic Analyzer, ML Classifier, Response Handler
+
+### Analysis Tools
+1. **Code Analysis Tab**: Paste Java code for instant vulnerability detection
+2. **File Upload Tab**: Drag-and-drop .java files for comprehensive scanning
+3. **Network Scan Tab**: Test network requests for security issues
+4. **Agent Status Panel**: Monitor all agents with health metrics
+
+### Example Analysis Results
+```json
+{
+  "totalFindings": 3,
+  "criticalCount": 1,
+  "highCount": 2,
+  "findings": [
+    {
+      "category": "SQL_INJECTION",
+      "severity": "CRITICAL",
+      "description": "Potential SQL injection vulnerability detected",
+      "location": "Example.java:5",
+      "confidence": 0.90,
+      "recommendations": [
+        "Use PreparedStatement with parameterized queries",
+        "Implement input validation and sanitization"
+      ]
+    }
+  ]
+}
 ```
 
-## 📝 Example Output
+## 📝 CLI Example Output
 
 ```
 ================================================================================
-AI Agent for Vulnerability Detection, Handling and Blocking
+JavaShield - AI Security Platform
 Java 25 - Advanced Security Automation System
 ================================================================================
 
@@ -289,15 +350,47 @@ Step 1: Initializing Security Agents...
 ✓ Registered 4 security agents
 
 Step 2: Starting All Agents...
-✓ All agents are running
+## 🎨 UI Screenshots
 
-Demo 1: Static Code Analysis
---------------------------------------------------------------------------------
-Analyzed file: /tmp/VulnerableCode.java
-Found 3 potential vulnerabilities
-  → SQL Injection [CRITICAL] - Confidence: 0.90
+The web interface features:
+- **Modern Design**: Clean, professional layout with Inter font
+- **Purple Gradient Theme**: Eye-catching color scheme
+- **Responsive Cards**: Animated hover effects
+- **Real-time Updates**: Auto-refresh every 5 seconds
+- **Font Awesome Icons**: Professional iconography throughout
+- **Severity Badges**: Color-coded vulnerability indicators
+
+## 🚀 What's New
+
+### Version 1.0.0
+- ✅ Complete Java 25 support with structured concurrency
+- ✅ Professional web interface with REST API
+- ✅ Spring Boot 3.4.0 integration
+- ✅ 4 autonomous AI agents
+- ✅ Real-time vulnerability detection
+- ✅ One-click Windows launcher scripts
+- ✅ Interactive analysis dashboard
+
+## 📧 Contact & Support
+
+- **Repository**: [github.com/maaahhdiii/javashild](https://github.com/maaahhdiii/javashild)
+- **Issues**: Open an issue on GitHub for bug reports or feature requests
+
+---
+
+**⚠️ Disclaimer**: This is an advanced security tool. Always test in a safe environment before deploying to production systems.
+
+**🌟 Star this repo** if you find it useful!
   → Hardcoded Credentials [HIGH] - Confidence: 0.75
   → Insecure Deserialization [HIGH] - Confidence: 0.80
+
+Demo 2: ML Model Training
+--------------------------------------------------------------------------------
+Training accuracy: 100.0%
+Model ready for classification
+
+...
+``` Insecure Deserialization [HIGH] - Confidence: 0.80
 Critical findings: 1
 High severity findings: 2
 
