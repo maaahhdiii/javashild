@@ -148,6 +148,9 @@ public class SecurityAgentController {
             Path tempFile = Files.createTempFile("code-analysis-", ".java");
             Files.writeString(tempFile, request.getCode());
             
+            logger.info("Created temp file: {}, exists: {}, size: {}", 
+                tempFile, Files.exists(tempFile), Files.size(tempFile));
+            
             SecurityAgent.SecurityEvent event = new SecurityAgent.SecurityEvent(
                 UUID.randomUUID().toString(),
                 java.time.Instant.now(),
@@ -156,10 +159,14 @@ public class SecurityAgentController {
                 tempFile  // Pass Path object, not String
             );
             
+            logger.info("Sending event with payload type: {}", event.payload().getClass().getName());
+            
             CompletableFuture<AgentOrchestrator.AggregatedFindings> resultFuture = 
                 orchestrator.analyzeEvent(event);
             
             AgentOrchestrator.AggregatedFindings result = resultFuture.get(30, TimeUnit.SECONDS);
+            
+            logger.info("Analysis complete: {} findings", result.findings().size());
             
             List<FindingDto> findings = result.findings().stream()
                 .map(f -> new FindingDto(

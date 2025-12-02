@@ -74,11 +74,22 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
     protected List<SecurityFinding> performAnalysis(SecurityEvent event) throws Exception {
         List<SecurityFinding> findings = new ArrayList<>();
         
+        logger.info("StaticAnalysisAgent - Event type: {}, Payload type: {}", 
+            event.type(), 
+            event.payload() != null ? event.payload().getClass().getName() : "null");
+        
         if (event.type() == SecurityEvent.EventType.CODE_CHANGE && event.payload() instanceof Path sourcePath) {
+            logger.info("StaticAnalysisAgent - Analyzing path: {}, exists: {}", 
+                sourcePath, Files.exists(sourcePath));
+            
             // Parallel analysis using structured concurrency
             findings.addAll(analyzeWithAST(sourcePath));
             findings.addAll(analyzeWithPMD(sourcePath));
             findings.addAll(analyzeWithSpotBugs(sourcePath));
+            
+            logger.info("StaticAnalysisAgent - Found {} vulnerabilities", findings.size());
+        } else {
+            logger.warn("StaticAnalysisAgent - Skipping analysis: wrong event type or payload type");
         }
         
         return findings;
