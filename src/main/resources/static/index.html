@@ -776,8 +776,8 @@
                 const response = await fetch('/api/security/status');
                 const data = await response.json();
                 
-                document.getElementById('active-agents').textContent = data.agentCount || 0;
-                document.getElementById('system-status').textContent = data.status || 'Online';
+                document.getElementById('active-agents').textContent = data.activeAgents || 0;
+                document.getElementById('system-status').textContent = data.status || 'OPERATIONAL';
                 
                 // Load agents
                 const agentsContainer = document.getElementById('agents-container');
@@ -802,7 +802,7 @@
                             <div class="agent-meta">
                                 <div class="agent-meta-item">
                                     <div class="agent-meta-label">Health</div>
-                                    <div class="agent-meta-value">${Math.round(agent.health * 100)}%</div>
+                                    <div class="agent-meta-value">${agent.health || 'Healthy'}</div>
                                 </div>
                                 <div class="agent-meta-item">
                                     <div class="agent-meta-label">ID</div>
