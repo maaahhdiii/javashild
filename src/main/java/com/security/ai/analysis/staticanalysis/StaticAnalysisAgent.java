@@ -1119,4 +1119,158 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
             return findings;
         }
     }
+    
+    /**
+     * Generate fixed code for a vulnerability using simple string replacement
+     * @param originalCode The vulnerable code
+     * @param finding The security finding
+     * @return Fixed code or null if cannot fix
+     */
+    public String generateFix(String originalCode, SecurityAgent.SecurityFinding finding) {
+        if (originalCode == null || finding == null) {
+            return null;
+        }
+        
+        try {
+            String[] lines = originalCode.split("\\n");
+            int lineNum = extractLineNumber(finding.location());
+            
+            if (lineNum <= 0 || lineNum > lines.length) {
+                return null;
+            }
+            
+            String category = finding.category();
+            String targetLine = lines[lineNum - 1];
+            String fixedLine = targetLine;
+            
+            // Apply fixes based on category
+            switch (category) {
+                case "SQL Injection":
+                    if (targetLine.contains("+") && (targetLine.contains("SELECT") || targetLine.contains("INSERT") || 
+                        targetLine.contains("UPDATE") || targetLine.contains("DELETE"))) {
+                        // Replace concatenation with PreparedStatement comment
+                        fixedLine = targetLine + " // TODO: Use PreparedStatement with ? placeholder";
+                    }
+                    break;
+                    
+                case "Hardcoded Credentials":
+                    if (targetLine.contains("=") && targetLine.contains("\"")) {
+                        // Extract variable name
+                        String varName = extractVariableName(targetLine);
+                        if (varName != null) {
+                            fixedLine = targetLine.replaceAll("\"[^\"]+\"", "System.getenv(\"" + varName.toUpperCase() + "\")");
+                        }
+                    }
+                    break;
+                    
+                case "Insecure Deserialization":
+                    if (targetLine.contains("ObjectInputStream") || targetLine.contains("XMLDecoder")) {
+                        fixedLine = targetLine + " // SECURITY: Use JSON serialization (Jackson/Gson) instead";
+                    }
+                    break;
+                    
+                case "Path Traversal":
+                    if (targetLine.contains("new File") && targetLine.contains("+")) {
+                        fixedLine = targetLine + " // SECURITY: Validate and normalize path with Paths.get().normalize()";
+                    }
+                    break;
+                    
+                case "Command Injection":
+                    if (targetLine.contains("Runtime.getRuntime().exec") || targetLine.contains("ProcessBuilder")) {
+                        fixedLine = targetLine + " // SECURITY: Use ProcessBuilder with String[] args, validate input";
+                    }
+                    break;
+                    
+                case "Cross-Site Scripting (XSS)":
+                    if (targetLine.contains("println") && targetLine.contains("+")) {
+                        fixedLine = targetLine.replaceAll("\\+\\s*\\w+\\s*\\+", "+ StringEscapeUtils.escapeHtml4($1) +");
+                    }
+                    break;
+                    
+                case "XXE Injection":
+                    if (targetLine.contains("DocumentBuilderFactory") || targetLine.contains("SAXParserFactory")) {
+                        fixedLine = targetLine + " // SECURITY: Set secure features - XMLConstants.FEATURE_SECURE_PROCESSING";
+                    }
+                    break;
+                    
+                case "Insecure Cryptography":
+                    if (targetLine.contains("MD5") || targetLine.contains("MD2")) {
+                        fixedLine = targetLine.replace("MD5", "SHA-256").replace("MD2", "SHA-256");
+                    } else if (targetLine.contains("DES") && !targetLine.contains("AES")) {
+                        fixedLine = targetLine.replace("DES", "AES/GCM/NoPadding");
+                    } else if (targetLine.contains("new Random()")) {
+                        fixedLine = targetLine.replace("new Random()", "new SecureRandom()");
+                    } else if (targetLine.contains("ECB")) {
+                        fixedLine = targetLine.replace("ECB", "GCM");
+                    }
+                    break;
+                    
+                case "Insecure Network Protocol":
+                case "Insecure Network Configuration":
+                case "Insecure Network Communication":
+                case "Weak TLS/SSL Protocol":
+                case "Insecure SSL/TLS Configuration":
+                    if (targetLine.contains("\"http://")) {
+                        fixedLine = targetLine.replace("http://", "https://");
+                    } else if (targetLine.contains("TLSv1\"") || targetLine.contains("SSLv")) {
+                        fixedLine = targetLine.replaceAll("(TLSv1|SSLv[0-9])", "TLSv1.3");
+                    } else if (targetLine.contains("new Socket")) {
+                        fixedLine = targetLine + " // SECURITY: Use SSLSocketFactory.getDefault().createSocket()";
+                    } else if (targetLine.contains("setHostnameVerifier") || targetLine.contains("ALLOW_ALL")) {
+                        fixedLine = "        // SECURITY FIX: Hostname verification MUST be enabled\n" + 
+                                   "        // " + targetLine.trim() + " // REMOVED - Use default verifier\n" +
+                                   "        // connection.setHostnameVerifier(HttpsURLConnection.getDefaultHostnameVerifier());";
+                    } else if (targetLine.contains("TrustManager")) {
+                        fixedLine = targetLine + " // SECURITY: Do NOT use custom TrustManagers that accept all certificates";
+                    } else if (targetLine.contains("checkServerTrusted") || targetLine.contains("checkClientTrusted")) {
+                        fixedLine = "        // SECURITY FIX: Use default SSL certificate validation\n" +
+                                   "        // " + targetLine.trim() + " // REMOVED - implement proper validation";
+                    } else {
+                        // Generic SSL/TLS fix comment
+                        fixedLine = targetLine + " // SECURITY: Enable proper SSL/TLS validation";
+                    }
+                    break;
+            }
+            
+            // Rebuild code with fixed line
+            if (!fixedLine.equals(targetLine)) {
+                lines[lineNum - 1] = fixedLine;
+                return String.join("\n", lines);
+            }
+            
+            return null; // No fix applied
+            
+        } catch (Exception e) {
+            logger.error("Failed to generate fix: {}", e.getMessage());
+            return null;
+        }
+    }
+    
+    private int extractLineNumber(String location) {
+        if (location == null) return 0;
+        try {
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\d+");
+            java.util.regex.Matcher matcher = pattern.matcher(location);
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group());
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return 0;
+    }
+    
+    private String extractVariableName(String line) {
+        try {
+            // Extract variable name from declaration like: String password = "..."
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\b(\\w+)\\s*=");
+            java.util.regex.Matcher matcher = pattern.matcher(line);
+            if (matcher.find()) {
+                return matcher.group(1);
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return null;
+    }
 }

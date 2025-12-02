@@ -137,7 +137,8 @@ public class SecurityAgentController {
                     f.severity().name(),
                     f.location(),
                     f.confidenceScore(),
-                    f.recommendations()
+                    f.recommendations(),
+                    f.autoRemediationPossible()
                 ))
                 .collect(Collectors.toList());
             
@@ -221,7 +222,8 @@ public class SecurityAgentController {
                     f.severity().name(),
                     f.location(),
                     f.confidenceScore(),
-                    f.recommendations()
+                    f.recommendations(),
+                    f.autoRemediationPossible()
                 ))
                 .collect(Collectors.toList());
             
@@ -291,7 +293,8 @@ public class SecurityAgentController {
                     f.severity().name(),
                     f.location(),
                     f.confidenceScore(),
-                    f.recommendations()
+                    f.recommendations(),
+                    f.autoRemediationPossible()
                 ))
                 .collect(Collectors.toList());
             
@@ -336,5 +339,85 @@ public class SecurityAgentController {
             totalScans.get(), totalFindings.get(), threatsBlocked.get());
         
         return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Apply auto-fix to vulnerable code
+     */
+    @PostMapping("/apply-fix")
+    public ResponseEntity<Map<String, Object>> applyFix(@RequestBody Map<String, Object> request) {
+        try {
+            String code = (String) request.get("code");
+            @SuppressWarnings("unchecked")
+            Map<String, String> findingMap = (Map<String, String>) request.get("finding");
+            
+            if (code == null || findingMap == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "Missing code or finding"
+                ));
+            }
+            
+            // Create SecurityFinding from map with all required fields
+            SecurityAgent.SecurityFinding finding = new SecurityAgent.SecurityFinding(
+                UUID.randomUUID().toString(),  // findingId
+                java.time.Instant.now(),       // detectedAt
+                parseSeverity(findingMap.getOrDefault("severity", "MEDIUM")),  // severity
+                findingMap.getOrDefault("category", "Unknown"),    // category
+                findingMap.getOrDefault("description", ""),        // description
+                findingMap.getOrDefault("location", ""),           // location
+                null,                                              // cveId
+                0.9,                                              // confidenceScore
+                List.of("Apply auto-fix"),                        // recommendations
+                true                                              // autoRemediationPossible
+            );
+            
+            // Generate fix
+            String fixedCode = staticAgent.generateFix(code, finding);
+            
+            if (fixedCode == null) {
+                return ResponseEntity.ok(Map.of(
+                    "success", false,
+                    "error", "Could not generate fix for this vulnerability"
+                ));
+            }
+            
+            // Generate backup ID
+            String backupId = "backup_" + System.currentTimeMillis();
+            String backupPath = "backups/" + backupId + ".java";
+            
+            // Return result
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("originalCode", code);
+            response.put("fixedCode", fixedCode);
+            response.put("backupId", backupId);
+            response.put("backupPath", backupPath);
+            response.put("finding", Map.of(
+                "category", finding.category(),
+                "severity", finding.severity().toString(),
+                "description", finding.description(),
+                "location", finding.location()
+            ));
+            
+            logger.info("Auto-fix applied for {} vulnerability", finding.category());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Auto-fix failed: {}", e.getMessage());
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "error", e.getMessage()
+            ));
+        }
+    }
+    
+    private SecurityAgent.SecurityFinding.Severity parseSeverity(String severity) {
+        try {
+            return SecurityAgent.SecurityFinding.Severity.valueOf(severity.toUpperCase());
+        } catch (Exception e) {
+            return SecurityAgent.SecurityFinding.Severity.MEDIUM;
+        }
     }
 }

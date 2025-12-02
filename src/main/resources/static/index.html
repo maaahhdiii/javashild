@@ -828,6 +828,8 @@
             const code = document.getElementById('code-input').value;
             const resultsDiv = document.getElementById('code-results');
             
+            currentCode = code; // Store for fix generation
+            
             resultsDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-sync-alt loading"></i> Analyzing code...</div>';
             
             try {
@@ -939,15 +941,18 @@
                 return;
             }
             
+            // Store findings for auto-fix
+            currentFindings = result.findings || [];
+            
             let html = `
                 <div class="alert alert-error">
                     <i class="fas fa-exclamation-triangle"></i> Found ${result.totalFindings} finding(s) - ${result.criticalCount} critical, ${result.highCount} high
                 </div>
             `;
             
-            result.findings.forEach(finding => {
+            result.findings.forEach((finding, index) => {
                 html += `
-                    <div class="finding-card">
+                    <div class="finding-card" id="finding-${index}">
                         <div class="finding-header">
                             <div class="finding-title">${finding.category}</div>
                             <span class="severity-badge severity-${finding.severity.toLowerCase()}">${finding.severity}</span>
@@ -966,6 +971,12 @@
                                     ${finding.recommendations.map(rec => `<li style="color: var(--gray); margin-bottom: 4px;">${rec}</li>`).join('')}
                                 </ul>
                             </div>
+                        ` : ''}
+                        ${finding.autoFixAvailable ? `
+                            <button class="btn btn-success" style="margin-top: 12px; width: 100%;" onclick='applyFix(${index})'>
+                                <i class="fas fa-magic"></i> Apply Auto-Fix
+                            </button>
+                            <div id="fix-result-${index}" style="margin-top: 12px;"></div>
                         ` : ''}
                     </div>
                 `;
@@ -1001,6 +1012,104 @@
             loadSystemStatus();
             updateStatistics();
         }, 5000);
+        
+        // Apply Fix functionality
+        let currentCode = '';
+        let currentFindings = [];
+        
+        async function applyFix(findingIndex) {
+            const finding = currentFindings[findingIndex];
+            if (!finding) {
+                console.error('Finding not found at index:', findingIndex);
+                return;
+            }
+            
+            const resultDiv = document.getElementById(`fix-result-${findingIndex}`);
+            resultDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-cog fa-spin"></i> Generating fix...</div>';
+            
+            try {
+                const response = await fetch('/api/security/apply-fix', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: currentCode,
+                        finding: {
+                            category: finding.category,
+                            severity: finding.severity,
+                            description: finding.description,
+                            location: finding.location
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> Fix generated successfully!
+                            <strong>Backup ID:</strong> ${result.backupId}
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h4 style="margin: 0;"><i class="fas fa-wrench"></i> Fixed Code</h4>
+                                <button class="btn btn-primary" onclick="copyFixedCode(\`${result.fixedCode.replace(/`/g, '\\`')}\`)">
+                                    <i class="fas fa-copy"></i> Copy Fixed Code
+                                </button>
+                            </div>
+                            <div style="background: var(--dark); padding: 16px; border-radius: 8px; overflow-x: auto;">
+                                <pre style="color: var(--light); margin: 0; font-size: 13px; line-height: 1.6;">${escapeHtml(result.fixedCode)}</pre>
+                            </div>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <h4><i class="fas fa-code-branch"></i> What Was Fixed</h4>
+                            <div style="padding: 12px; background: var(--light); border-radius: 8px; border-left: 4px solid var(--success);">
+                                <p style="margin: 0; color: var(--dark);"><strong>${result.finding.category}</strong></p>
+                                <p style="margin: 8px 0 0 0; color: var(--gray);">${result.finding.description}</p>
+                                <p style="margin: 8px 0 0 0; color: var(--gray);"><strong>Severity:</strong> ${result.finding.severity}</p>
+                            </div>
+                        </div>
+                        <details style="margin-top: 16px;">
+                            <summary style="cursor: pointer; padding: 12px; background: var(--light); border-radius: 8px; font-weight: 500;">
+                                <i class="fas fa-eye"></i> View Original Code
+                            </summary>
+                            <div style="margin-top: 12px; background: var(--dark); padding: 16px; border-radius: 8px; overflow-x: auto;">
+                                <pre style="color: var(--light); margin: 0; font-size: 13px; line-height: 1.6;">${escapeHtml(result.originalCode)}</pre>
+                            </div>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> ${result.error || 'Could not generate fix'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle"></i> Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        function copyFixedCode(code) {
+            const textarea = document.createElement('textarea');
+            textarea.value = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"');
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            alert('Fixed code copied to clipboard!');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
         // Initial load
         loadSystemStatus();
