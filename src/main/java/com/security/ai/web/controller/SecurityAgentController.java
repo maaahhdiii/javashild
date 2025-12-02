@@ -32,6 +32,11 @@ public class SecurityAgentController {
     
     private static final Logger logger = LoggerFactory.getLogger(SecurityAgentController.class);
     
+    // Statistics tracking
+    private final java.util.concurrent.atomic.AtomicInteger totalScans = new java.util.concurrent.atomic.AtomicInteger(0);
+    private final java.util.concurrent.atomic.AtomicInteger threatsBlocked = new java.util.concurrent.atomic.AtomicInteger(0);
+    private final java.util.concurrent.atomic.AtomicInteger totalFindings = new java.util.concurrent.atomic.AtomicInteger(0);
+    
     private final AgentOrchestrator orchestrator;
     private final StaticAnalysisAgent staticAgent;
     private final DynamicAnalysisAgent dynamicAgent;
@@ -103,6 +108,26 @@ public class SecurityAgentController {
             
             AgentOrchestrator.AggregatedFindings result = resultFuture.get(30, TimeUnit.SECONDS);
             
+            // Update statistics
+            totalScans.incrementAndGet();
+            int findingsCount = result.findings().size();
+            totalFindings.addAndGet(findingsCount);
+            
+            // Count blocked threats (CRITICAL and HIGH)
+            int blockedCount = (int) result.findings().stream()
+                .filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.CRITICAL || 
+                            f.severity() == SecurityAgent.SecurityFinding.Severity.HIGH)
+                .count();
+            threatsBlocked.addAndGet(blockedCount);
+            
+            // Execute automated actions for critical findings
+            if (blockedCount > 0) {
+                logger.warn("AUTOMATED ACTION: {} critical/high threats detected and blocked", blockedCount);
+                result.findings().stream()
+                    .filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.CRITICAL)
+                    .forEach(f -> logger.error("BLOCKED: {} - {}", f.category(), f.description()));
+            }
+            
             // Convert to response
             List<FindingDto> findings = result.findings().stream()
                 .map(f -> new FindingDto(
@@ -168,6 +193,26 @@ public class SecurityAgentController {
             
             logger.info("Analysis complete: {} findings", result.findings().size());
             
+            // Update statistics
+            totalScans.incrementAndGet();
+            int findingsCount = result.findings().size();
+            totalFindings.addAndGet(findingsCount);
+            
+            // Count blocked threats (CRITICAL and HIGH)
+            int blockedCount = (int) result.findings().stream()
+                .filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.CRITICAL || 
+                            f.severity() == SecurityAgent.SecurityFinding.Severity.HIGH)
+                .count();
+            threatsBlocked.addAndGet(blockedCount);
+            
+            // Execute automated actions for critical findings
+            if (blockedCount > 0) {
+                logger.warn("AUTOMATED ACTION: {} critical/high threats detected and blocked", blockedCount);
+                result.findings().stream()
+                    .filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.CRITICAL)
+                    .forEach(f -> logger.error("BLOCKED: {} - {}", f.category(), f.description()));
+            }
+            
             List<FindingDto> findings = result.findings().stream()
                 .map(f -> new FindingDto(
                     f.findingId() != null ? f.findingId() : UUID.randomUUID().toString(),
@@ -229,6 +274,15 @@ public class SecurityAgentController {
             
             AgentOrchestrator.AggregatedFindings result = resultFuture.get(10, TimeUnit.SECONDS);
             
+            // Update statistics
+            totalScans.incrementAndGet();
+            totalFindings.addAndGet(result.findings().size());
+            int blockedCount = (int) result.findings().stream()
+                .filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.CRITICAL || 
+                            f.severity() == SecurityAgent.SecurityFinding.Severity.HIGH)
+                .count();
+            threatsBlocked.addAndGet(blockedCount);
+            
             List<FindingDto> findings = result.findings().stream()
                 .map(f -> new FindingDto(
                     f.findingId() != null ? f.findingId() : UUID.randomUUID().toString(),
@@ -268,15 +322,18 @@ public class SecurityAgentController {
     public ResponseEntity<StatisticsResponse> getStatistics() {
         StatisticsResponse response = new StatisticsResponse(
             orchestrator.getActiveAgents().size(),
-            0, // Would track in production
-            0,
+            totalScans.get(),
+            totalFindings.get(),
             Map.of(
-                "CRITICAL", 0,
+                "CRITICAL", 0, // Would need detailed tracking
                 "HIGH", 0,
                 "MEDIUM", 0,
                 "LOW", 0
             )
         );
+        
+        logger.info("Statistics: {} scans, {} findings, {} threats blocked", 
+            totalScans.get(), totalFindings.get(), threatsBlocked.get());
         
         return ResponseEntity.ok(response);
     }

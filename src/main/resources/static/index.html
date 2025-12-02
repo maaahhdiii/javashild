@@ -912,8 +912,24 @@
             }
         }
 
+        // Update statistics display
+        async function updateStatistics() {
+            try {
+                const response = await fetch('/api/security/statistics');
+                const stats = await response.json();
+                
+                document.getElementById('total-scans').textContent = stats.totalScans || 0;
+                document.getElementById('threats-blocked').textContent = stats.totalFindings || 0;
+            } catch (error) {
+                console.error('Error updating statistics:', error);
+            }
+        }
+        
         // Display results
         function displayResults(result, container) {
+            // Update statistics after analysis
+            updateStatistics();
+            
             if (!result.findings || result.findings.length === 0) {
                 container.innerHTML = `
                     <div class="alert alert-success">
@@ -977,13 +993,18 @@
 
         function refreshData() {
             loadSystemStatus();
+            updateStatistics();
         }
 
         // Auto-refresh every 5 seconds
-        setInterval(loadSystemStatus, 5000);
+        setInterval(() => {
+            loadSystemStatus();
+            updateStatistics();
+        }, 5000);
 
         // Initial load
         loadSystemStatus();
+        updateStatistics();
     </script>
 </body>
 </html>

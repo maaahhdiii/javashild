@@ -138,6 +138,31 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
             // Detect insecure deserialization
             findings.addAll(detectInsecureDeserialization(cu, sourcePath));
             
+            // Detect command injection
+            List<SecurityFinding> cmdFindings = detectCommandInjection(cu, sourcePath);
+            logger.info("AST - Command injection findings: {}", cmdFindings.size());
+            findings.addAll(cmdFindings);
+            
+            // Detect XSS vulnerabilities
+            List<SecurityFinding> xssFindings = detectXSS(cu, sourcePath);
+            logger.info("AST - XSS findings: {}", xssFindings.size());
+            findings.addAll(xssFindings);
+            
+            // Detect XXE vulnerabilities
+            List<SecurityFinding> xxeFindings = detectXXEInjection(cu, sourcePath);
+            logger.info("AST - XXE findings: {}", xxeFindings.size());
+            findings.addAll(xxeFindings);
+            
+            // Detect insecure cryptography
+            List<SecurityFinding> cryptoFindings = detectInsecureCryptography(cu, sourcePath);
+            logger.info("AST - Insecure crypto findings: {}", cryptoFindings.size());
+            findings.addAll(cryptoFindings);
+            
+            // Detect insecure network
+            List<SecurityFinding> networkFindings = detectInsecureNetwork(cu, sourcePath);
+            logger.info("AST - Insecure network findings: {}", networkFindings.size());
+            findings.addAll(networkFindings);
+            
             // Custom pattern detection
             findings.addAll(patternDetector.detect(cu, sourcePath));
         } else {
@@ -424,6 +449,531 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
                         ),
                         false
                     ));
+                }
+            }
+        }, null);
+        
+        return findings;
+    }
+    
+    /**
+     * Detect command injection vulnerabilities
+     */
+    private List<SecurityFinding> detectCommandInjection(CompilationUnit cu, Path sourcePath) {
+        List<SecurityFinding> findings = new ArrayList<>();
+        
+        cu.accept(new VoidVisitorAdapter<Void>() {
+            @Override
+            public void visit(MethodCallExpr methodCall, Void arg) {
+                super.visit(methodCall, arg);
+                
+                String methodName = methodCall.getNameAsString();
+                
+                // Detect Runtime.exec() with concatenation
+                if (methodName.equals("exec") && methodCall.getArguments().size() > 0) {
+                    String argStr = methodCall.getArgument(0).toString();
+                    if (argStr.contains("+") || argStr.contains("concat")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.CRITICAL,
+                            "Command Injection",
+                            "Command execution with string concatenation - critical command injection vulnerability",
+                            sourcePath + ":" + methodCall.getBegin().get().line,
+                            "CWE-78",
+                            0.98,
+                            List.of(
+                                "Never concatenate user input into shell commands",
+                                "Use parameterized command execution with ProcessBuilder",
+                                "Implement strict input validation and allowlisting",
+                                "Avoid shell execution when possible"
+                            ),
+                            true
+                        ));
+                    }
+                }
+                
+                // Detect ScriptEngine.eval() - code execution
+                if (methodName.equals("eval")) {
+                    findings.add(new SecurityFinding(
+                        null, null,
+                        SecurityFinding.Severity.CRITICAL,
+                        "Code Injection",
+                        "Dynamic code execution detected - can execute arbitrary code",
+                        sourcePath + ":" + methodCall.getBegin().get().line,
+                        "CWE-94",
+                        0.95,
+                        List.of(
+                            "Avoid dynamic code execution with user input",
+                            "Use safer alternatives or sandboxing",
+                            "Implement strict input validation"
+                        ),
+                        true
+                    ));
+                }
+            }
+            
+            @Override
+            public void visit(VariableDeclarator var, Void arg) {
+                super.visit(var, arg);
+                
+                if (var.getInitializer().isPresent()) {
+                    String initValue = var.getInitializer().get().toString();
+                    String varType = var.getType().toString();
+                    
+                    // Detect ProcessBuilder with concatenation
+                    if (varType.contains("ProcessBuilder") && initValue.contains("+")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.HIGH,
+                            "Command Injection",
+                            "ProcessBuilder with string concatenation - potential command injection",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-78",
+                            0.85,
+                            List.of(
+                                "Use ProcessBuilder with separate arguments",
+                                "Validate and sanitize all inputs",
+                                "Avoid shell invocation"
+                            ),
+                            true
+                        ));
+                    }
+                }
+            }
+        }, null);
+        
+        return findings;
+    }
+    
+    /**
+     * Detect Cross-Site Scripting (XSS) vulnerabilities
+     */
+    private List<SecurityFinding> detectXSS(CompilationUnit cu, Path sourcePath) {
+        List<SecurityFinding> findings = new ArrayList<>();
+        
+        cu.accept(new VoidVisitorAdapter<Void>() {
+            @Override
+            public void visit(MethodCallExpr methodCall, Void arg) {
+                super.visit(methodCall, arg);
+                
+                String methodName = methodCall.getNameAsString();
+                
+                // Detect PrintWriter.println() with concatenation (reflected XSS)
+                if ((methodName.equals("println") || methodName.equals("print") || methodName.equals("write")) 
+                    && methodCall.getArguments().size() > 0) {
+                    String argStr = methodCall.getArgument(0).toString();
+                    if (argStr.contains("+") && (argStr.contains("<") || argStr.contains("html") || argStr.contains("script"))) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.CRITICAL,
+                            "Cross-Site Scripting (XSS)",
+                            "HTML output with unsanitized user input - XSS vulnerability",
+                            sourcePath + ":" + methodCall.getBegin().get().line,
+                            "CWE-79",
+                            0.90,
+                            List.of(
+                                "Encode all user input before outputting to HTML",
+                                "Use OWASP Java Encoder or similar libraries",
+                                "Implement Content Security Policy (CSP)",
+                                "Never trust user input in HTML context"
+                            ),
+                            true
+                        ));
+                    }
+                }
+                
+                // Detect innerHTML or similar DOM manipulation
+                if (methodName.equals("innerHTML") || methodName.equals("innerText")) {
+                    findings.add(new SecurityFinding(
+                        null, null,
+                        SecurityFinding.Severity.HIGH,
+                        "DOM-based XSS",
+                        "Direct DOM manipulation - potential DOM-based XSS",
+                        sourcePath + ":" + methodCall.getBegin().get().line,
+                        "CWE-79",
+                        0.75,
+                        List.of(
+                            "Sanitize all data before inserting into DOM",
+                            "Use textContent instead of innerHTML when possible",
+                            "Implement proper output encoding"
+                        ),
+                        true
+                    ));
+                }
+            }
+            
+            @Override
+            public void visit(VariableDeclarator var, Void arg) {
+                super.visit(var, arg);
+                
+                if (var.getInitializer().isPresent()) {
+                    String initValue = var.getInitializer().get().toString();
+                    
+                    // Detect HTML strings with concatenation
+                    if ((initValue.contains("<html") || initValue.contains("<div") || 
+                         initValue.contains("<script") || initValue.contains("<a href")) && 
+                        initValue.contains("+")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.HIGH,
+                            "Cross-Site Scripting (XSS)",
+                            "HTML string constructed with concatenation - potential XSS",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-79",
+                            0.85,
+                            List.of(
+                                "Use template engines with auto-escaping",
+                                "Encode all user data before inserting into HTML",
+                                "Avoid building HTML with string concatenation"
+                            ),
+                            true
+                        ));
+                    }
+                }
+            }
+        }, null);
+        
+        return findings;
+    }
+    
+    /**
+     * Detect XML External Entity (XXE) injection vulnerabilities
+     */
+    private List<SecurityFinding> detectXXEInjection(CompilationUnit cu, Path sourcePath) {
+        List<SecurityFinding> findings = new ArrayList<>();
+        
+        cu.accept(new VoidVisitorAdapter<Void>() {
+            @Override
+            public void visit(VariableDeclarator var, Void arg) {
+                super.visit(var, arg);
+                
+                if (var.getInitializer().isPresent()) {
+                    String varType = var.getType().toString();
+                    String initValue = var.getInitializer().get().toString();
+                    
+                    // Detect unsafe XML parsers
+                    if (varType.contains("DocumentBuilderFactory") || initValue.contains("DocumentBuilderFactory.newInstance")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.HIGH,
+                            "XML External Entity (XXE) Injection",
+                            "DocumentBuilderFactory without secure configuration - XXE vulnerability",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-611",
+                            0.90,
+                            List.of(
+                                "Disable external entity processing: factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)",
+                                "Disable DOCTYPE declarations",
+                                "Use secure XML parsing libraries"
+                            ),
+                            true
+                        ));
+                    }
+                    
+                    if (varType.contains("SAXParserFactory") || initValue.contains("SAXParserFactory.newInstance")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.HIGH,
+                            "XML External Entity (XXE) Injection",
+                            "SAXParserFactory without secure configuration - XXE vulnerability",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-611",
+                            0.90,
+                            List.of(
+                                "Disable external entity processing",
+                                "Set secure features on parser factory",
+                                "Use JAXB or other secure alternatives"
+                            ),
+                            true
+                        ));
+                    }
+                    
+                    if (varType.contains("XMLReader") || initValue.contains("XMLReader")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.HIGH,
+                            "XML External Entity (XXE) Injection",
+                            "XMLReader without secure configuration - XXE vulnerability",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-611",
+                            0.85,
+                            List.of(
+                                "Configure XMLReader with secure features",
+                                "Disable external entity resolution"
+                            ),
+                            true
+                        ));
+                    }
+                }
+            }
+        }, null);
+        
+        return findings;
+    }
+    
+    /**
+     * Detect insecure cryptography vulnerabilities
+     */
+    private List<SecurityFinding> detectInsecureCryptography(CompilationUnit cu, Path sourcePath) {
+        List<SecurityFinding> findings = new ArrayList<>();
+        
+        cu.accept(new VoidVisitorAdapter<Void>() {
+            @Override
+            public void visit(MethodCallExpr methodCall, Void arg) {
+                super.visit(methodCall, arg);
+                
+                String methodName = methodCall.getNameAsString();
+                
+                // Detect weak hash algorithms
+                if (methodName.equals("getInstance") && methodCall.getArguments().size() > 0) {
+                    String algorithm = methodCall.getArgument(0).toString().replace("\"", "").toUpperCase();
+                    
+                    if (algorithm.equals("MD5") || algorithm.equals("MD2")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.CRITICAL,
+                            "Weak Cryptographic Hash",
+                            "MD5 hash algorithm is cryptographically broken",
+                            sourcePath + ":" + methodCall.getBegin().get().line,
+                            "CWE-327",
+                            0.95,
+                            List.of(
+                                "Use SHA-256 or SHA-3 for hashing",
+                                "For passwords, use bcrypt, scrypt, or Argon2",
+                                "MD5 is vulnerable to collision attacks"
+                            ),
+                            true
+                        ));
+                    }
+                    
+                    if (algorithm.equals("SHA1") || algorithm.equals("SHA-1")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.HIGH,
+                            "Weak Cryptographic Hash",
+                            "SHA-1 hash algorithm is deprecated and weak",
+                            sourcePath + ":" + methodCall.getBegin().get().line,
+                            "CWE-327",
+                            0.90,
+                            List.of(
+                                "Use SHA-256, SHA-384, or SHA-512 instead",
+                                "SHA-1 is vulnerable to collision attacks"
+                            ),
+                            true
+                        ));
+                    }
+                    
+                    if (algorithm.equals("DES")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.CRITICAL,
+                            "Weak Encryption Algorithm",
+                            "DES encryption is cryptographically broken",
+                            sourcePath + ":" + methodCall.getBegin().get().line,
+                            "CWE-327",
+                            0.98,
+                            List.of(
+                                "Use AES-256 encryption instead",
+                                "DES has 56-bit key and is easily brute-forced",
+                                "Never use DES in production"
+                            ),
+                            true
+                        ));
+                    }
+                    
+                    // Detect ECB mode
+                    if (algorithm.contains("ECB")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.HIGH,
+                            "Insecure Cipher Mode",
+                            "ECB mode is insecure - reveals patterns in encrypted data",
+                            sourcePath + ":" + methodCall.getBegin().get().line,
+                            "CWE-327",
+                            0.90,
+                            List.of(
+                                "Use GCM or CBC mode instead of ECB",
+                                "ECB does not provide semantic security",
+                                "Use authenticated encryption (AES-GCM)"
+                            ),
+                            true
+                        ));
+                    }
+                }
+                
+                // Detect weak random number generator
+                if (methodCall.getScope().isPresent() && 
+                    methodCall.getScope().get().toString().equals("Random") &&
+                    (methodName.equals("nextInt") || methodName.equals("nextLong"))) {
+                    findings.add(new SecurityFinding(
+                        null, null,
+                        SecurityFinding.Severity.HIGH,
+                        "Weak Random Number Generator",
+                        "java.util.Random is not cryptographically secure",
+                        sourcePath + ":" + methodCall.getBegin().get().line,
+                        "CWE-338",
+                        0.85,
+                        List.of(
+                            "Use SecureRandom instead of Random",
+                            "java.util.Random is predictable",
+                            "Use SecureRandom for security-sensitive operations"
+                        ),
+                        true
+                    ));
+                }
+            }
+            
+            @Override
+            public void visit(VariableDeclarator var, Void arg) {
+                super.visit(var, arg);
+                
+                if (var.getInitializer().isPresent()) {
+                    String varType = var.getType().toString();
+                    String initValue = var.getInitializer().get().toString();
+                    
+                    // Detect weak Random instantiation
+                    if (varType.contains("Random") && !varType.contains("SecureRandom") && 
+                        initValue.contains("new Random")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.MEDIUM,
+                            "Weak Random Number Generator",
+                            "Using java.util.Random - not cryptographically secure",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-338",
+                            0.80,
+                            List.of(
+                                "Use SecureRandom for cryptographic operations",
+                                "Random is predictable and unsuitable for security"
+                            ),
+                            false
+                        ));
+                    }
+                }
+            }
+        }, null);
+        
+        return findings;
+    }
+    
+    /**
+     * Detect insecure network communication vulnerabilities
+     */
+    private List<SecurityFinding> detectInsecureNetwork(CompilationUnit cu, Path sourcePath) {
+        List<SecurityFinding> findings = new ArrayList<>();
+        
+        cu.accept(new VoidVisitorAdapter<Void>() {
+            @Override
+            public void visit(MethodDeclaration method, Void arg) {
+                super.visit(method, arg);
+                
+                String methodCode = method.toString();
+                
+                // Detect trust all certificates
+                if (methodCode.contains("X509TrustManager") && 
+                    (methodCode.contains("checkClientTrusted") || methodCode.contains("checkServerTrusted")) &&
+                    methodCode.contains("{}")) {
+                    findings.add(new SecurityFinding(
+                        null, null,
+                        SecurityFinding.Severity.CRITICAL,
+                        "Insecure SSL/TLS Configuration",
+                        "Accepting all SSL certificates - defeats SSL/TLS security",
+                        sourcePath + ":" + method.getBegin().get().line,
+                        "CWE-295",
+                        0.98,
+                        List.of(
+                            "Never disable certificate validation",
+                            "Use proper certificate validation",
+                            "This enables man-in-the-middle attacks"
+                        ),
+                        true
+                    ));
+                }
+                
+                // Detect disabled hostname verification
+                if (methodCode.contains("HostnameVerifier") && methodCode.contains("return true")) {
+                    findings.add(new SecurityFinding(
+                        null, null,
+                        SecurityFinding.Severity.HIGH,
+                        "Insecure SSL/TLS Configuration",
+                        "Hostname verification disabled - vulnerable to MITM attacks",
+                        sourcePath + ":" + method.getBegin().get().line,
+                        "CWE-297",
+                        0.95,
+                        List.of(
+                            "Enable hostname verification",
+                            "Validate SSL certificate hostnames",
+                            "Disabling verification allows MITM attacks"
+                        ),
+                        true
+                    ));
+                }
+            }
+            
+            @Override
+            public void visit(VariableDeclarator var, Void arg) {
+                super.visit(var, arg);
+                
+                if (var.getInitializer().isPresent()) {
+                    String varType = var.getType().toString();
+                    String initValue = var.getInitializer().get().toString();
+                    
+                    // Detect HTTP instead of HTTPS
+                    if (varType.contains("URL") && initValue.contains("\"http://") && !initValue.contains("localhost")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.CRITICAL,
+                            "Insecure Network Communication",
+                            "Using HTTP instead of HTTPS - data transmitted in cleartext",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-319",
+                            0.95,
+                            List.of(
+                                "Always use HTTPS for sensitive data",
+                                "HTTP traffic can be intercepted and modified",
+                                "Implement TLS/SSL for all network communication"
+                            ),
+                            true
+                        ));
+                    }
+                    
+                    // Detect weak TLS version
+                    if (initValue.contains("TLSv1\"") || initValue.contains("SSLv3") || initValue.contains("SSL\"")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.HIGH,
+                            "Weak TLS Version",
+                            "Using outdated TLS/SSL version - vulnerable to attacks",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-327",
+                            0.90,
+                            List.of(
+                                "Use TLS 1.2 or TLS 1.3",
+                                "TLS 1.0/1.1 and SSL are deprecated",
+                                "Update to modern cryptographic protocols"
+                            ),
+                            true
+                        ));
+                    }
+                    
+                    // Detect plain Socket instead of SSLSocket
+                    if (varType.equals("Socket") && initValue.contains("new Socket")) {
+                        findings.add(new SecurityFinding(
+                            null, null,
+                            SecurityFinding.Severity.MEDIUM,
+                            "Unencrypted Socket Communication",
+                            "Using plain Socket without encryption",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-319",
+                            0.75,
+                            List.of(
+                                "Use SSLSocket for encrypted communication",
+                                "Plain sockets transmit data in cleartext",
+                                "Implement TLS for socket communication"
+                            ),
+                            false
+                        ));
+                    }
                 }
             }
         }, null);
