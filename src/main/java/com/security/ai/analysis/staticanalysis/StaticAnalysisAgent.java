@@ -4,6 +4,7 @@ import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.security.ai.agent.AbstractSecurityAgent;
@@ -84,8 +85,10 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
             
             // Parallel analysis using structured concurrency
             findings.addAll(analyzeWithAST(sourcePath));
-            findings.addAll(analyzeWithPMD(sourcePath));
-            findings.addAll(analyzeWithSpotBugs(sourcePath));
+            // Temporarily disabled PMD due to Saxon XPath library conflict with Java 25
+            // findings.addAll(analyzeWithPMD(sourcePath));
+            // SpotBugs requires compiled classes
+            // findings.addAll(analyzeWithSpotBugs(sourcePath));
             
             logger.info("StaticAnalysisAgent - Found {} vulnerabilities", findings.size());
         } else {
@@ -105,22 +108,44 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
             return findings;
         }
         
+        // Log the source code being analyzed
+        String sourceCode = Files.readString(sourcePath);
+        logger.info("AST - Analyzing {} bytes of code: {}", 
+            sourceCode.length(), 
+            sourceCode.length() > 300 ? sourceCode.substring(0, 300) + "..." : sourceCode);
+        
         ParseResult<CompilationUnit> parseResult = javaParser.parse(sourcePath);
+        
+        logger.info("AST - Parse successful: {}, result present: {}", 
+            parseResult.isSuccessful(), 
+            parseResult.getResult().isPresent());
         
         if (parseResult.isSuccessful() && parseResult.getResult().isPresent()) {
             CompilationUnit cu = parseResult.getResult().get();
             
+            logger.info("AST - CompilationUnit types count: {}", cu.getTypes().size());
+            
             // Detect SQL injection vulnerabilities
-            findings.addAll(detectSQLInjection(cu, sourcePath));
+            List<SecurityFinding> sqlFindings = detectSQLInjection(cu, sourcePath);
+            logger.info("AST - SQL injection findings: {}", sqlFindings.size());
+            findings.addAll(sqlFindings);
             
             // Detect hardcoded credentials
-            findings.addAll(detectHardcodedCredentials(cu, sourcePath));
+            List<SecurityFinding> credFindings = detectHardcodedCredentials(cu, sourcePath);
+            logger.info("AST - Hardcoded credentials findings: {}", credFindings.size());
+            findings.addAll(credFindings);
             
             // Detect insecure deserialization
             findings.addAll(detectInsecureDeserialization(cu, sourcePath));
             
             // Custom pattern detection
             findings.addAll(patternDetector.detect(cu, sourcePath));
+        } else {
+            logger.warn("AST - Parse failed or no result");
+            if (!parseResult.isSuccessful()) {
+                parseResult.getProblems().forEach(problem -> 
+                    logger.warn("AST - Parse problem: {}", problem.getMessage()));
+            }
         }
         
         return findings;
@@ -197,14 +222,51 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
     private List<SecurityFinding> detectSQLInjection(CompilationUnit cu, Path sourcePath) {
         List<SecurityFinding> findings = new ArrayList<>();
         
+        // Detect SQL queries with string concatenation
         cu.accept(new VoidVisitorAdapter<Void>() {
+            @Override
+            public void visit(VariableDeclarator var, Void arg) {
+                super.visit(var, arg);
+                
+                if (var.getInitializer().isPresent()) {
+                    String varName = var.getNameAsString().toLowerCase();
+                    String initValue = var.getInitializer().get().toString();
+                    
+                    // Check if it's a SQL query (contains SQL keywords) with concatenation
+                    if ((varName.contains("query") || varName.contains("sql")) &&
+                        (initValue.toUpperCase().contains("SELECT") || 
+                         initValue.toUpperCase().contains("INSERT") ||
+                         initValue.toUpperCase().contains("UPDATE") ||
+                         initValue.toUpperCase().contains("DELETE")) &&
+                        initValue.contains("+")) {
+                        
+                        findings.add(new SecurityFinding(
+                            null,
+                            null,
+                            SecurityFinding.Severity.CRITICAL,
+                            "SQL Injection",
+                            "SQL query constructed with string concatenation - vulnerable to SQL injection",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-89",
+                            0.95,
+                            List.of(
+                                "Use PreparedStatement with parameterized queries instead of string concatenation",
+                                "Never concatenate user input directly into SQL queries",
+                                "Consider using an ORM framework with built-in SQL injection protection"
+                            ),
+                            true
+                        ));
+                    }
+                }
+            }
+            
             @Override
             public void visit(MethodCallExpr methodCall, Void arg) {
                 super.visit(methodCall, arg);
                 
                 String methodName = methodCall.getNameAsString();
-                if ((methodName.equals("executeQuery") || methodName.equals("executeUpdate")) &&
-                    methodCall.getArguments().size() > 0) {
+                if ((methodName.equals("executeQuery") || methodName.equals("executeUpdate") || 
+                     methodName.equals("execute")) && methodCall.getArguments().size() > 0) {
                     
                     // Check if query is constructed with string concatenation
                     String argStr = methodCall.getArgument(0).toString();
@@ -214,10 +276,10 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
                             null,
                             SecurityFinding.Severity.CRITICAL,
                             "SQL Injection",
-                            "Potential SQL injection vulnerability: query constructed with string concatenation",
+                            "SQL execution with concatenated query - critical SQL injection vulnerability",
                             sourcePath + ":" + methodCall.getBegin().get().line,
                             "CWE-89",
-                            0.90,
+                            0.98,
                             List.of(
                                 "Use PreparedStatement with parameterized queries",
                                 "Implement input validation and sanitization",
@@ -238,32 +300,42 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
      */
     private List<SecurityFinding> detectHardcodedCredentials(CompilationUnit cu, Path sourcePath) {
         List<SecurityFinding> findings = new ArrayList<>();
-        String[] credentialKeywords = {"password", "passwd", "pwd", "secret", "apikey", "token"};
+        String[] credentialKeywords = {"password", "passwd", "pwd", "secret", "apikey", "api_key", "token", "key", "credential", "auth"};
         
         cu.accept(new VoidVisitorAdapter<Void>() {
             @Override
-            public void visit(MethodDeclaration method, Void arg) {
-                super.visit(method, arg);
+            public void visit(VariableDeclarator var, Void arg) {
+                super.visit(var, arg);
                 
-                String methodCode = method.toString().toLowerCase();
+                String varName = var.getNameAsString().toLowerCase();
+                
+                // Check if variable name suggests it's a credential
                 for (String keyword : credentialKeywords) {
-                    if (methodCode.contains(keyword + " = \"") || methodCode.contains(keyword + "=\"")) {
-                        findings.add(new SecurityFinding(
-                            null,
-                            null,
-                            SecurityFinding.Severity.HIGH,
-                            "Hardcoded Credentials",
-                            "Potential hardcoded credentials detected: " + keyword,
-                            sourcePath + ":" + method.getBegin().get().line,
-                            "CWE-798",
-                            0.75,
-                            List.of(
-                                "Use environment variables or secure configuration management",
-                                "Implement secrets management solution (e.g., HashiCorp Vault)",
-                                "Never commit credentials to version control"
-                            ),
-                            true
-                        ));
+                    if (varName.contains(keyword) && var.getInitializer().isPresent()) {
+                        String initValue = var.getInitializer().get().toString();
+                        // Check if it's a hardcoded string literal (not empty, not a method call)
+                        if (initValue.startsWith("\"") && initValue.length() > 3 && 
+                            !initValue.contains("()") && !initValue.equals("\"\"")) {
+                            
+                            findings.add(new SecurityFinding(
+                                null,
+                                null,
+                                SecurityFinding.Severity.HIGH,
+                                "Hardcoded Credentials",
+                                "Hardcoded credential found: " + varName + " = " + 
+                                    (initValue.length() > 30 ? initValue.substring(0, 27) + "..." : initValue),
+                                sourcePath + ":" + var.getBegin().get().line,
+                                "CWE-798",
+                                0.90,
+                                List.of(
+                                    "Store credentials in environment variables or secure vaults",
+                                    "Use configuration management systems",
+                                    "Never commit credentials to source control",
+                                    "Consider using secrets management services"
+                                ),
+                                true
+                            ));
+                        }
                     }
                 }
             }
@@ -279,6 +351,55 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
         List<SecurityFinding> findings = new ArrayList<>();
         
         cu.accept(new VoidVisitorAdapter<Void>() {
+            @Override
+            public void visit(VariableDeclarator var, Void arg) {
+                super.visit(var, arg);
+                
+                if (var.getInitializer().isPresent()) {
+                    String initValue = var.getInitializer().get().toString();
+                    String varType = var.getType().toString();
+                    
+                    // Detect ObjectInputStream creation
+                    if (varType.contains("ObjectInputStream") || initValue.contains("new ObjectInputStream")) {
+                        findings.add(new SecurityFinding(
+                            null,
+                            null,
+                            SecurityFinding.Severity.HIGH,
+                            "Insecure Deserialization",
+                            "ObjectInputStream usage detected - potential deserialization vulnerability",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-502",
+                            0.85,
+                            List.of(
+                                "Validate object types before deserialization",
+                                "Use allowlist of acceptable classes",
+                                "Avoid deserializing untrusted data"
+                            ),
+                            true
+                        ));
+                    }
+                    
+                    // Detect XMLDecoder usage
+                    if (varType.contains("XMLDecoder") || initValue.contains("new XMLDecoder")) {
+                        findings.add(new SecurityFinding(
+                            null,
+                            null,
+                            SecurityFinding.Severity.CRITICAL,
+                            "Insecure Deserialization",
+                            "XMLDecoder usage detected - critical deserialization vulnerability",
+                            sourcePath + ":" + var.getBegin().get().line,
+                            "CWE-502",
+                            0.95,
+                            List.of(
+                                "Avoid using XMLDecoder for untrusted data",
+                                "Use safer alternatives like JAXB or Jackson"
+                            ),
+                            true
+                        ));
+                    }
+                }
+            }
+            
             @Override
             public void visit(MethodCallExpr methodCall, Void arg) {
                 super.visit(methodCall, arg);
