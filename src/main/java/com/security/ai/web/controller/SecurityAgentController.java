@@ -93,8 +93,8 @@ public class SecurityAgentController {
                 UUID.randomUUID().toString(),
                 java.time.Instant.now(),
                 SecurityAgent.SecurityEvent.EventType.CODE_CHANGE,
-                tempFile.toString(),
-                null
+                tempFile.getFileName().toString(),
+                tempFile  // Pass Path object, not String
             );
             
             // Analyze
@@ -152,8 +152,8 @@ public class SecurityAgentController {
                 UUID.randomUUID().toString(),
                 java.time.Instant.now(),
                 SecurityAgent.SecurityEvent.EventType.CODE_CHANGE,
-                tempFile.toString(),
-                null
+                request.getFilename() != null ? request.getFilename() : "inline-code.java",
+                tempFile  // Pass Path object, not String
             );
             
             CompletableFuture<AgentOrchestrator.AggregatedFindings> resultFuture = 
