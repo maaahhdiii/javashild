@@ -848,11 +848,30 @@
 
         // Analyze network
         async function analyzeNetwork() {
-            const protocol = document.getElementById('network-protocol').value;
-            const host = document.getElementById('network-host').value;
-            const port = document.getElementById('network-port').value;
+            let protocol = document.getElementById('network-protocol').value;
+            let host = document.getElementById('network-host').value.trim();
+            let port = document.getElementById('network-port').value;
             const path = document.getElementById('network-path').value;
             const resultsDiv = document.getElementById('network-results');
+            
+            // Parse URL if user entered a full URL
+            if (host.startsWith('http://') || host.startsWith('https://')) {
+                try {
+                    const url = new URL(host);
+                    protocol = url.protocol.replace(':', '').toUpperCase();
+                    host = url.hostname;
+                    if (url.port) {
+                        port = url.port;
+                    }
+                    // Update UI fields
+                    document.getElementById('network-protocol').value = protocol;
+                    document.getElementById('network-host').value = host;
+                    document.getElementById('network-port').value = port;
+                } catch (e) {
+                    resultsDiv.innerHTML = `<div class="alert alert-error"><i class="fas fa-times-circle"></i> Invalid URL format</div>`;
+                    return;
+                }
+            }
             
             resultsDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-sync-alt loading"></i> Scanning network...</div>';
             
@@ -943,6 +962,10 @@
             
             // Store findings for auto-fix
             currentFindings = result.findings || [];
+            // Store code from backend response (for file uploads)
+            if (result.code) {
+                currentCode = result.code;
+            }
             
             let html = `
                 <div class="alert alert-error">

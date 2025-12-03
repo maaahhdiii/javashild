@@ -243,7 +243,7 @@ public class DynamicAnalysisAgent extends AbstractSecurityAgent {
                         "Implement TLS/SSL encryption",
                         "Validate SSL certificates"
                     ),
-                    true
+                    false  // Network issues cannot be auto-fixed via code changes
                 ));
             }
             
@@ -265,7 +265,7 @@ public class DynamicAnalysisAgent extends AbstractSecurityAgent {
                             "Implement domain allowlist",
                             "Review network traffic logs"
                         ),
-                        true
+                        false  // Network issues cannot be auto-fixed via code changes
                     ));
                 }
             }

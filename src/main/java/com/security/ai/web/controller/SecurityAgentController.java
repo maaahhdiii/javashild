@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -89,9 +90,12 @@ public class SecurityAgentController {
     @PostMapping("/analyze/file")
     public ResponseEntity<AnalysisResultResponse> analyzeFile(@RequestParam("file") MultipartFile file) {
         try {
+            // Read file content
+            String fileContent = new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            
             // Save uploaded file temporarily
             Path tempFile = Files.createTempFile("security-analysis-", ".java");
-            Files.copy(file.getInputStream(), tempFile, StandardCopyOption.REPLACE_EXISTING);
+            Files.writeString(tempFile, fileContent);
             
             // Create analysis event
             SecurityAgent.SecurityEvent event = new SecurityAgent.SecurityEvent(
@@ -149,7 +153,8 @@ public class SecurityAgentController {
                 findings,
                 result.findings().size(),
                 (int) result.findings().stream().filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.CRITICAL).count(),
-                (int) result.findings().stream().filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.HIGH).count()
+                (int) result.findings().stream().filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.HIGH).count(),
+                fileContent
             );
             
             return ResponseEntity.ok(response);
@@ -159,7 +164,7 @@ public class SecurityAgentController {
             return ResponseEntity.status(500).body(new AnalysisResultResponse(
                 "ERROR: " + e.getMessage(),
                 Collections.emptyList(),
-                0, 0, 0
+                0, 0, 0, null
             ));
         }
     }
@@ -234,7 +239,8 @@ public class SecurityAgentController {
                 findings,
                 result.findings().size(),
                 (int) result.findings().stream().filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.CRITICAL).count(),
-                (int) result.findings().stream().filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.HIGH).count()
+                (int) result.findings().stream().filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.HIGH).count(),
+                request.getCode()
             );
             
             return ResponseEntity.ok(response);
@@ -244,7 +250,7 @@ public class SecurityAgentController {
             return ResponseEntity.status(500).body(new AnalysisResultResponse(
                 "ERROR: " + e.getMessage(),
                 Collections.emptyList(),
-                0, 0, 0
+                0, 0, 0, null
             ));
         }
     }
@@ -303,7 +309,8 @@ public class SecurityAgentController {
                 findings,
                 result.findings().size(),
                 (int) result.findings().stream().filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.CRITICAL).count(),
-                (int) result.findings().stream().filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.HIGH).count()
+                (int) result.findings().stream().filter(f -> f.severity() == SecurityAgent.SecurityFinding.Severity.HIGH).count(),
+                null
             );
             
             return ResponseEntity.ok(response);
@@ -313,7 +320,7 @@ public class SecurityAgentController {
             return ResponseEntity.status(500).body(new AnalysisResultResponse(
                 "ERROR: " + e.getMessage(),
                 Collections.emptyList(),
-                0, 0, 0
+                0, 0, 0, null
             ));
         }
     }

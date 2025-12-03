@@ -1128,6 +1128,7 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
      */
     public String generateFix(String originalCode, SecurityAgent.SecurityFinding finding) {
         if (originalCode == null || finding == null) {
+            logger.error("generateFix called with null: code={}, finding={}", originalCode != null, finding != null);
             return null;
         }
         
@@ -1135,7 +1136,11 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
             String[] lines = originalCode.split("\\n");
             int lineNum = extractLineNumber(finding.location());
             
+            logger.info("generateFix: category={}, lineNum={}, totalLines={}, location={}", 
+                finding.category(), lineNum, lines.length, finding.location());
+            
             if (lineNum <= 0 || lineNum > lines.length) {
+                logger.error("Invalid line number: {} (total lines: {})", lineNum, lines.length);
                 return null;
             }
             
@@ -1143,65 +1148,101 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
             String targetLine = lines[lineNum - 1];
             String fixedLine = targetLine;
             
+            logger.info("generateFix: targetLine=[{}]", targetLine);
+            
             // Apply fixes based on category
             switch (category) {
                 case "SQL Injection":
+                    logger.info("SQL Injection case - checking line: {}", targetLine);
                     if (targetLine.contains("+") && (targetLine.contains("SELECT") || targetLine.contains("INSERT") || 
                         targetLine.contains("UPDATE") || targetLine.contains("DELETE"))) {
                         // Replace concatenation with PreparedStatement comment
                         fixedLine = targetLine + " // TODO: Use PreparedStatement with ? placeholder";
+                        logger.info("SQL Injection fix applied: {}", fixedLine);
+                    } else {
+                        logger.warn("SQL Injection line did not match pattern. Contains +: {}, Contains SELECT: {}", 
+                            targetLine.contains("+"), targetLine.contains("SELECT"));
                     }
                     break;
                     
                 case "Hardcoded Credentials":
+                    logger.info("Hardcoded Credentials case - checking line: {}", targetLine);
                     if (targetLine.contains("=") && targetLine.contains("\"")) {
-                        // Extract variable name
-                        String varName = extractVariableName(targetLine);
-                        if (varName != null) {
-                            fixedLine = targetLine.replaceAll("\"[^\"]+\"", "System.getenv(\"" + varName.toUpperCase() + "\")");
-                        }
+                        // Simple fix: add comment to use environment variable
+                        fixedLine = targetLine + " // SECURITY: Use System.getenv() or secure vault instead";
+                        logger.info("Hardcoded Credentials fix applied");
+                    } else {
+                        logger.warn("Hardcoded Credentials line did not match pattern");
                     }
                     break;
                     
                 case "Insecure Deserialization":
+                    logger.info("Insecure Deserialization case - checking line: {}", targetLine);
                     if (targetLine.contains("ObjectInputStream") || targetLine.contains("XMLDecoder")) {
                         fixedLine = targetLine + " // SECURITY: Use JSON serialization (Jackson/Gson) instead";
+                        logger.info("Insecure Deserialization fix applied");
+                    } else {
+                        logger.warn("Insecure Deserialization line did not match pattern");
                     }
                     break;
                     
                 case "Path Traversal":
+                    logger.info("Path Traversal case - checking line: {}", targetLine);
                     if (targetLine.contains("new File") && targetLine.contains("+")) {
                         fixedLine = targetLine + " // SECURITY: Validate and normalize path with Paths.get().normalize()";
+                        logger.info("Path Traversal fix applied");
+                    } else {
+                        logger.warn("Path Traversal line did not match pattern");
                     }
                     break;
                     
                 case "Command Injection":
+                    logger.info("Command Injection case - checking line: {}", targetLine);
                     if (targetLine.contains("Runtime.getRuntime().exec") || targetLine.contains("ProcessBuilder")) {
                         fixedLine = targetLine + " // SECURITY: Use ProcessBuilder with String[] args, validate input";
+                        logger.info("Command Injection fix applied");
+                    } else {
+                        logger.warn("Command Injection line did not match pattern");
                     }
                     break;
                     
                 case "Cross-Site Scripting (XSS)":
-                    if (targetLine.contains("println") && targetLine.contains("+")) {
-                        fixedLine = targetLine.replaceAll("\\+\\s*\\w+\\s*\\+", "+ StringEscapeUtils.escapeHtml4($1) +");
+                    logger.info("XSS case - checking line: {}", targetLine);
+                    if (targetLine.contains("println") || targetLine.contains("print") || targetLine.contains("write")) {
+                        fixedLine = targetLine + " // SECURITY: Use StringEscapeUtils.escapeHtml4() to encode output";
+                        logger.info("XSS fix applied");
+                    } else {
+                        logger.warn("XSS line did not match pattern");
                     }
                     break;
                     
                 case "XXE Injection":
-                    if (targetLine.contains("DocumentBuilderFactory") || targetLine.contains("SAXParserFactory")) {
-                        fixedLine = targetLine + " // SECURITY: Set secure features - XMLConstants.FEATURE_SECURE_PROCESSING";
+                    logger.info("XXE case - checking line: {}", targetLine);
+                    if (targetLine.contains("DocumentBuilderFactory") || targetLine.contains("SAXParserFactory") || targetLine.contains("XMLReader")) {
+                        fixedLine = targetLine + " // SECURITY: Set XMLConstants.FEATURE_SECURE_PROCESSING and disable external entities";
+                        logger.info("XXE fix applied");
+                    } else {
+                        logger.warn("XXE line did not match pattern");
                     }
                     break;
                     
                 case "Insecure Cryptography":
+                    logger.info("Insecure Cryptography case - checking line: {}", targetLine);
                     if (targetLine.contains("MD5") || targetLine.contains("MD2")) {
                         fixedLine = targetLine.replace("MD5", "SHA-256").replace("MD2", "SHA-256");
+                        logger.info("Insecure Cryptography fix applied (MD5/MD2 -> SHA-256)");
                     } else if (targetLine.contains("DES") && !targetLine.contains("AES")) {
                         fixedLine = targetLine.replace("DES", "AES/GCM/NoPadding");
+                        logger.info("Insecure Cryptography fix applied (DES -> AES)");
                     } else if (targetLine.contains("new Random()")) {
                         fixedLine = targetLine.replace("new Random()", "new SecureRandom()");
+                        logger.info("Insecure Cryptography fix applied (Random -> SecureRandom)");
                     } else if (targetLine.contains("ECB")) {
                         fixedLine = targetLine.replace("ECB", "GCM");
+                        logger.info("Insecure Cryptography fix applied (ECB -> GCM)");
+                    } else {
+                        fixedLine = targetLine + " // SECURITY: Use strong cryptography (SHA-256, AES/GCM, SecureRandom)";
+                        logger.info("Insecure Cryptography generic fix applied");
                     }
                     break;
                     
@@ -1210,25 +1251,37 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
                 case "Insecure Network Communication":
                 case "Weak TLS/SSL Protocol":
                 case "Insecure SSL/TLS Configuration":
+                    logger.info("Network/SSL/TLS case - checking line: {}", targetLine);
                     if (targetLine.contains("\"http://")) {
                         fixedLine = targetLine.replace("http://", "https://");
+                        logger.info("Network fix applied (http -> https)");
                     } else if (targetLine.contains("TLSv1\"") || targetLine.contains("SSLv")) {
                         fixedLine = targetLine.replaceAll("(TLSv1|SSLv[0-9])", "TLSv1.3");
+                        logger.info("Network fix applied (TLS version upgrade)");
                     } else if (targetLine.contains("new Socket")) {
                         fixedLine = targetLine + " // SECURITY: Use SSLSocketFactory.getDefault().createSocket()";
+                        logger.info("Network fix applied (Socket -> SSLSocket recommendation)");
                     } else if (targetLine.contains("setHostnameVerifier") || targetLine.contains("ALLOW_ALL")) {
                         fixedLine = "        // SECURITY FIX: Hostname verification MUST be enabled\n" + 
                                    "        // " + targetLine.trim() + " // REMOVED - Use default verifier\n" +
                                    "        // connection.setHostnameVerifier(HttpsURLConnection.getDefaultHostnameVerifier());";
+                        logger.info("Network fix applied (hostname verification)");
                     } else if (targetLine.contains("TrustManager")) {
                         fixedLine = targetLine + " // SECURITY: Do NOT use custom TrustManagers that accept all certificates";
+                        logger.info("Network fix applied (TrustManager warning)");
                     } else if (targetLine.contains("checkServerTrusted") || targetLine.contains("checkClientTrusted")) {
                         fixedLine = "        // SECURITY FIX: Use default SSL certificate validation\n" +
                                    "        // " + targetLine.trim() + " // REMOVED - implement proper validation";
+                        logger.info("Network fix applied (certificate validation)");
                     } else {
                         // Generic SSL/TLS fix comment
                         fixedLine = targetLine + " // SECURITY: Enable proper SSL/TLS validation";
+                        logger.info("Network generic fix applied");
                     }
+                    break;
+                    
+                default:
+                    logger.warn("No fix handler for category: {}", category);
                     break;
             }
             
@@ -1249,13 +1302,22 @@ public class StaticAnalysisAgent extends AbstractSecurityAgent {
     private int extractLineNumber(String location) {
         if (location == null) return 0;
         try {
+            // Location format: "file.java:3" or "path/to/file.java:3"
+            // Extract the number AFTER the last colon
+            if (location.contains(":")) {
+                String[] parts = location.split(":");
+                // Get the last part (line number)
+                String lineNumStr = parts[parts.length - 1].trim();
+                return Integer.parseInt(lineNumStr);
+            }
+            // Fallback: try to find any number
             java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\d+");
             java.util.regex.Matcher matcher = pattern.matcher(location);
             if (matcher.find()) {
                 return Integer.parseInt(matcher.group());
             }
         } catch (Exception e) {
-            // Ignore
+            logger.error("Failed to extract line number from location: {}", location, e);
         }
         return 0;
     }
