@@ -8,17 +8,19 @@
 
 ## 🎯 Overview
 
-JavaShield is an intelligent AI-driven security platform that automatically detects, analyzes, handles, and blocks security vulnerabilities in real-time. Built with Java 25 and Spring Boot 3.4, leveraging virtual threads, structured concurrency, and machine learning for autonomous security management.
+JavaShield is an intelligent AI-driven security platform that automatically detects, analyzes, handles, and **auto-fixes** security vulnerabilities in real-time. Built with Java 25 and Spring Boot 3.4, leveraging virtual threads, structured concurrency, and machine learning for autonomous security management.
 
-**🌐 Web Interface Available** - Professional web-based UI for interactive security analysis and monitoring!
+**🌐 Web Interface Available** - Professional web-based UI with one-click auto-fix for 9 vulnerability types!
+
+**🔧 Auto-Remediation Feature** - Intelligent code transformation with interactive diff viewer and security comments!
 
 ## ✨ Key Features
 
 ### 🔍 Multi-Layer Detection
-- **Static Analysis**: AST parsing, PMD, SpotBugs integration
+- **Static Analysis**: AST parsing with 9 vulnerability types
 - **Dynamic Analysis**: Runtime behavior monitoring
 - **ML Classification**: Tribuo-based risk assessment
-- **Vulnerability DB**: NVD, CVE, OWASP Dependency-Check integration
+- **Auto-Remediation**: Intelligent code fixing for detected vulnerabilities
 
 ### 🤖 Autonomous Agents
 - Virtual thread-based architecture using Java 25
@@ -26,19 +28,19 @@ JavaShield is an intelligent AI-driven security platform that automatically dete
 - Self-managing agent lifecycle
 - Real-time threat detection and response
 
-### 🛡️ Automated Response
+### 🛡️ Automated Security
+- **Auto-Fix System**: Automatically generates fixes for 9 vulnerability types
 - Intelligent threat blocking
 - Automated alerting system
-- Auto-remediation capabilities
-- Quarantine mechanisms
+- Interactive diff viewer for code changes
 
 ### 🌐 Professional Web Interface
-- Modern, responsive UI with Inter font
+- Modern, responsive UI with dark theme
 - Real-time agent monitoring dashboard
-- Interactive code analysis
-- File upload with drag-and-drop
-- Network security scanning
-- Live vulnerability detection results
+- **3 Analysis Modes**: Code input, file upload, network scanning
+- **Auto-Fix Feature**: One-click vulnerability remediation
+- Live vulnerability detection with confidence scores
+- Copy-to-clipboard functionality
 
 ### 🔄 CI/CD Integration
 - Jenkins pipeline support
@@ -126,6 +128,38 @@ java --enable-preview -cp target/vulnerability-detection-agent-1.0.0.jar com.sec
 ```
 
 ## 💻 Usage Examples
+
+### Auto-Fix Workflow (Web UI) 🆕
+
+1. **Analyze Code**:
+   - **Option A**: Paste Java code in "Code Analysis" tab
+   - **Option B**: Upload .java file in "File Upload" tab
+
+2. **Review Findings**: View detected vulnerabilities with severity and confidence scores
+
+3. **Apply Auto-Fix**:
+   - Click "Apply Auto-Fix" button on any finding with ✅ auto-fix support
+   - View side-by-side diff showing original and fixed code
+   - Read inline security comments explaining each change
+
+4. **Copy Fixed Code**: Use copy button to export remediated code to clipboard
+
+5. **Deploy**: Replace original code with fixed version
+
+**Example Auto-Fix for SQL Injection:**
+```java
+// BEFORE (Vulnerable)
+String query = "SELECT * FROM users WHERE id = " + userId;
+Statement stmt = conn.createStatement();
+ResultSet rs = stmt.executeQuery(query);
+
+// AFTER (Fixed with Auto-Fix)
+// SECURITY FIX: Use PreparedStatement to prevent SQL injection
+String query = "SELECT * FROM users WHERE id = ?";
+PreparedStatement stmt = conn.prepareStatement(query);
+stmt.setString(1, userId);
+ResultSet rs = stmt.executeQuery();
+```
 
 ### Programmatic Usage
 
@@ -222,23 +256,24 @@ Create `agent-config.json`:
 
 ## 📊 Supported Vulnerability Types
 
-### Static Analysis Detection
-- ✅ SQL Injection (CWE-89)
-- ✅ Hardcoded Credentials (CWE-798)
-- ✅ Insecure Deserialization (CWE-502)
-- ✅ XML External Entity (XXE) (CWE-611)
-- ✅ Path Traversal (CWE-22)
-- ✅ Cross-Site Scripting (XSS)
-- ✅ Command Injection
-- ✅ LDAP Injection
+### Static Analysis Detection (9 Types - All with Auto-Fix)
+- ✅ **SQL Injection** (CWE-89): PreparedStatement conversion
+- ✅ **Cross-Site Scripting (XSS)**: HTML escaping implementation
+- ✅ **Insecure Deserialization** (CWE-502): JSON serialization migration
+- ✅ **Path Traversal** (CWE-22): Path normalization with security
+- ✅ **Command Injection** (CWE-78): ProcessBuilder with security controls
+- ✅ **XXE Injection** (CWE-611): Secure XML parsing configuration
+- ✅ **Hardcoded Credentials** (CWE-798): Environment variable migration
+- ✅ **Insecure Cryptography** (CWE-327): Strong algorithm replacement (MD5→SHA-256, DES→AES)
+- ✅ **Network/SSL/TLS Issues** (CWE-295): HTTPS and TLS 1.3 enforcement
 
-### Dynamic Analysis Detection
-- ✅ Insecure Network Connections (CWE-319)
-- ✅ Sensitive File Access (CWE-200)
-- ✅ Unsafe Reflection (CWE-470)
-- ✅ Native Code Execution (CWE-242)
-- ✅ Memory Exhaustion
-- ✅ Privilege Escalation
+### Dynamic Analysis Detection (6 Types)
+- 🔍 **HTTP (Non-HTTPS) Connections** (CWE-319): Unencrypted communication detection
+- 🔍 **Weak TLS/SSL Configurations**: Protocol version analysis
+- 🔍 **Missing Certificate Validation**: Security check bypass detection
+- 🔍 **Suspicious Network Destinations**: Domain reputation analysis (.ru, .cn, .tk, etc.)
+- 🔍 **Sensitive File Access** (CWE-200): Data exposure monitoring
+- 🔍 **API Security Issues**: Endpoint security assessment
 
 ### Dependency Vulnerabilities
 - ✅ CVE Database Integration
@@ -313,10 +348,22 @@ Access the professional web UI at `http://localhost:8080` after starting the app
 ### Analysis Tools
 1. **Code Analysis Tab**: Paste Java code for instant vulnerability detection
 2. **File Upload Tab**: Drag-and-drop .java files for comprehensive scanning
-3. **Network Scan Tab**: Test network requests for security issues
+3. **Network Scan Tab**: Test network requests for security issues (supports full URL input)
 4. **Agent Status Panel**: Monitor all agents with health metrics
 
-### Example Analysis Results
+### Auto-Fix Features 🆕
+- **One-Click Remediation**: Automatically generate fixes for 9 vulnerability types
+- **Interactive Diff Viewer**: Side-by-side before/after comparison with syntax highlighting
+- **Security Comments**: Inline explanations embedded in fixed code
+- **Copy Function**: Quick clipboard export of remediated code
+- **Multi-Path Support**: Works with textarea input and file uploads
+
+### Network Scan Enhancements 🆕
+- **Smart URL Parsing**: Paste full URLs like `http://example.com` - auto-extracts protocol and hostname
+- **Real-time Analysis**: Instant HTTP/HTTPS security checks
+- **Recommendation System**: Detailed security guidance for network issues
+
+### Example Analysis Results with Auto-Fix
 ```json
 {
   "totalFindings": 3,
@@ -329,6 +376,7 @@ Access the professional web UI at `http://localhost:8080` after starting the app
       "description": "Potential SQL injection vulnerability detected",
       "location": "Example.java:5",
       "confidence": 0.90,
+      "autoFixAvailable": true,
       "recommendations": [
         "Use PreparedStatement with parameterized queries",
         "Implement input validation and sanitization"
@@ -363,13 +411,17 @@ The web interface features:
 ## 🚀 What's New
 
 ### Version 1.0.0
-- ✅ Complete Java 25 support with structured concurrency
-- ✅ Professional web interface with REST API
-- ✅ Spring Boot 3.4.0 integration
-- ✅ 4 autonomous AI agents
-- ✅ Real-time vulnerability detection
-- ✅ One-click Windows launcher scripts
-- ✅ Interactive analysis dashboard
+- ✅ **Auto-Fix System**: One-click remediation for 9 vulnerability types with intelligent code transformation
+- ✅ **Smart URL Parsing**: Network scan accepts full URLs with automatic protocol/hostname extraction
+- ✅ **Interactive Diff Viewer**: Visual before/after comparison with syntax highlighting
+- ✅ **Multi-Path Support**: Auto-fix works seamlessly with code textarea and file uploads
+- ✅ Complete Java 25 support with structured concurrency and virtual threads
+- ✅ Professional web interface with REST API endpoints
+- ✅ Spring Boot 3.4.0 integration with modern architecture
+- ✅ 4 autonomous AI agents for comprehensive security coverage
+- ✅ Real-time vulnerability detection with ML-enhanced confidence scoring
+- ✅ One-click Windows launcher scripts for easy deployment
+- ✅ Interactive analysis dashboard with live agent monitoring
 
 ## 📧 Contact & Support
 
