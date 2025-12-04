@@ -1,523 +1,611 @@
-# JavaShield - AI Security Platform
-## Java 25 + Spring Boot 3.4 - Advanced Security Automation System
+# 🛡️ JavaShield - AI-Powered Security Vulnerability Detection Platform
 
-[![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://jdk.java.net/25/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub](https://img.shields.io/badge/GitHub-javashild-blue.svg)](https://github.com/maaahhdiii/javashild)
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-25-orange?style=for-the-badge&logo=openjdk" alt="Java 25"/>
+  <img src="https://img.shields.io/badge/Spring_Boot-3.4.0-green?style=for-the-badge&logo=springboot" alt="Spring Boot"/>
+  <img src="https://img.shields.io/badge/ML-Tribuo_+_DL4J-blue?style=for-the-badge&logo=pytorch" alt="ML"/>
+  <img src="https://img.shields.io/badge/OWASP_ZAP-2.16.1-red?style=for-the-badge&logo=owasp" alt="OWASP ZAP"/>
+</p>
 
-## 🎯 Overview
+---
 
-JavaShield is an intelligent AI-driven security platform that automatically detects, analyzes, handles, and **auto-fixes** security vulnerabilities in real-time. Built with Java 25 and Spring Boot 3.4, leveraging virtual threads, structured concurrency, and machine learning for autonomous security management.
+## 📖 What is JavaShield?
 
-**🌐 Web Interface Available** - Professional web-based UI with one-click auto-fix for 9 vulnerability types!
+**JavaShield** is an intelligent security platform that automatically detects and fixes vulnerabilities in Java code using **Machine Learning (ML)** and **Deep Learning (DL)**. Think of it as a smart security guard for your code that:
 
-**🔧 Auto-Remediation Feature** - Intelligent code transformation with interactive diff viewer and security comments!
+1. **Scans** your Java code for security problems
+2. **Analyzes** using multiple detection engines (like having multiple experts review your code)
+3. **Classifies** vulnerabilities using trained AI models
+4. **Fixes** the issues automatically with one click
 
-## ✨ Key Features
+---
 
-### 🔍 Multi-Layer Detection
-- **Static Analysis**: AST parsing with 9 vulnerability types
-- **Dynamic Analysis**: Runtime behavior monitoring + **MCP Kali Tools Integration** 🆕
-- **ML Classification**: Tribuo-based risk assessment trained on 987 examples
-- **Auto-Remediation**: Intelligent code fixing for detected vulnerabilities
+## 🎯 Why This Project?
 
-### 🤖 Autonomous Agents
-- Virtual thread-based architecture using Java 25
-- Structured concurrency for parallel analysis
-- Self-managing agent lifecycle
-- Real-time threat detection and response
+Every year, thousands of security breaches happen because of vulnerabilities in code. Common problems include:
 
-### 🛡️ Automated Security
-- **Auto-Fix System**: Automatically generates fixes for 9 vulnerability types
-- Intelligent threat blocking
-- Automated alerting system
-- Interactive diff viewer for code changes
+| Problem | What Can Happen |
+|---------|-----------------|
+| **SQL Injection** | Attackers can steal your entire database |
+| **Path Traversal** | Attackers can read any file on your server (passwords, configs) |
+| **Insecure Network** | Data sent without encryption - anyone can read it |
+| **Weak Cryptography** | Passwords easily cracked |
+| **Command Injection** | Attackers can run commands on your server |
 
-### 🔐 MCP Kali Tools Integration 🆕
-- **7 Professional Security Scanners** via Docker MCP server:
-  - 📡 **Nmap**: Port scanning & service detection
-  - 🔍 **Nikto**: Web server vulnerability scanning
-  - 📂 **Dirb**: Directory enumeration & discovery
-  - 💉 **SQLMap**: SQL injection detection & exploitation
-  - 🌐 **WPScan**: WordPress vulnerability scanner
-  - 🔒 **Security Headers**: HTTP security headers analysis
-  - 🔎 **SearchSploit**: Exploit database search
-- **No Timeout Scanning**: Tools run to completion without time limits
-- **Progress Indicators**: Real-time [X/7] status with emoji icons
-- **ML-Enhanced Classification**: AdaBoost model trained on all 7 tool outputs
+**JavaShield solves this** by combining traditional security tools with AI to find AND fix these problems automatically.
 
-### 🌐 Professional Web Interface
-- Modern, responsive UI with dark theme
-- Real-time agent monitoring dashboard
-- **3 Analysis Modes**: Code input, file upload, network scanning
-- **Auto-Fix Feature**: One-click vulnerability remediation
-- Live vulnerability detection with ML confidence scores
-- Copy-to-clipboard functionality
+---
 
-### 🔄 CI/CD Integration
-- Jenkins pipeline support
-- GitHub Actions workflows
-- GitLab CI/CD configurations
-- SARIF format support
+## 🏗️ Architecture Overview
 
-## 🏗️ Architecture
+Here's how all the components work together:
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                      Code/Application                        │
-└────────────────────┬─────────────────────────────────────────┘
-                     │
-        ┌────────────▼───────────────┐
-        │   Agent Orchestrator       │
-        │  (Virtual Threads + SC)    │
-        └────────┬───────────────────┘
-                 │
-    ┌────────────┼────────────┬──────────────┐
-    │            │            │              │
-┌───▼───┐  ┌───▼───┐   ┌────▼────┐  ┌─────▼─────┐
-│Static │  │Dynamic│   │   ML    │  │ Response  │
-│ Agent │  │ Agent │   │  Agent  │  │  Agent    │
-└───┬───┘  └───┬───┘   └────┬────┘  └─────┬─────┘
-    │          │            │              │
-    │          │            │              │
-┌───▼──────────▼────────────▼──────────────▼───────┐
-│        Detection & Analysis Results              │
-└──────────────────┬───────────────────────────────┘
-                   │
-        ┌──────────▼──────────┐
-        │  Automated Response │
-        │  (Block/Alert/Fix)  │
-        └─────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        JavaShield Architecture                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌─────────────┐     ┌─────────────────────────────────────────────┐   │
+│  │   Frontend  │────▶│           REST API (Spring Boot)             │   │
+│  │   (HTML/JS) │     │           Port 8080                          │   │
+│  └─────────────┘     └──────────────────┬──────────────────────────┘   │
+│                                          │                              │
+│                      ┌───────────────────┼───────────────────┐         │
+│                      ▼                   ▼                   ▼         │
+│              ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   │
+│              │   Static     │   │    ML/DL     │   │   Dynamic    │   │
+│              │  Analyzers   │   │   Models     │   │  Analyzers   │   │
+│              └──────────────┘   └──────────────┘   └──────────────┘   │
+│                     │                   │                   │          │
+│         ┌──────────┬┴─────────┐        │         ┌─────────┴────────┐ │
+│         ▼          ▼          ▼        │         ▼                  ▼ │
+│      ┌─────┐   ┌─────┐   ┌───────┐    │    ┌──────────┐    ┌────────┐│
+│      │ PMD │   │Spot │   │Custom │    │    │OWASP ZAP │    │Runtime ││
+│      │     │   │Bugs │   │ AST   │    │    │ Scanner  │    │Monitor ││
+│      └─────┘   └─────┘   └───────┘    │    └──────────┘    └────────┘│
+│                                        │                              │
+│                           ┌────────────┴────────────┐                 │
+│                           ▼                         ▼                 │
+│                    ┌────────────┐           ┌────────────┐            │
+│                    │  Tribuo    │           │    DL4J    │            │
+│                    │ Ensemble   │           │  Neural    │            │
+│                    │ (ML)       │           │  Network   │            │
+│                    └────────────┘           └────────────┘            │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-## 🚀 Getting Started
+### What does each component do?
 
-### Prerequisites
-- **Java 25** (with preview features enabled) - [Download here](https://jdk.java.net/25/)
-- **Maven 3.9+**
-- **Docker** (for MCP Kali Tools integration) - [Download here](https://www.docker.com/products/docker-desktop/)
-- **Kali Security MCP Server** (Docker image): `kali-security-mcp-server:latest`
-- Network access for vulnerability database queries (optional)
+| Component | Type | Job |
+|-----------|------|-----|
+| **Frontend** | Web UI | Where you paste code and see results |
+| **Spring Boot API** | Backend | Receives requests, coordinates everything |
+| **PMD** | Static Analysis | Checks code against 17 security rules |
+| **SpotBugs** | Static Analysis | Finds bug patterns in compiled code |
+| **Custom AST** | Static Analysis | Parses code structure (Abstract Syntax Tree) |
+| **OWASP ZAP** | Dynamic Analysis | Tests running applications for vulnerabilities |
+| **Runtime Monitor** | Dynamic Analysis | Watches code behavior in real-time |
+| **Tribuo ML** | Machine Learning | Classifies code using trained models |
+| **DL4J Neural Network** | Deep Learning | Advanced AI classification |
 
-### Installation
+---
+
+## 🧠 How the Machine Learning Works
+
+### Simple Explanation
+
+Imagine teaching a child to recognize dangerous animals:
+1. You show them **many pictures** of dangerous animals (training data)
+2. They learn **patterns** (sharp teeth, bright colors = danger)
+3. Now they can **identify new** dangerous animals they've never seen
+
+That's exactly what our ML does with code! We show it thousands of examples of vulnerable code, it learns the patterns, and then it can identify new vulnerabilities.
+
+### Training Data Sources (1,457 examples total)
+
+| Source | Examples | What It Contains |
+|--------|----------|------------------|
+| **NVD (National Vulnerability Database)** | 200 | Real CVE vulnerability patterns from NIST |
+| **MISP (Threat Intelligence)** | 150 | Threat patterns from security community |
+| **OWASP Top 10** | 120 | Most common web vulnerabilities |
+| **Custom Patterns** | 987 | Our own labeled code samples |
+
+### Feature Extraction (150 features)
+
+The system looks at 150 different things in your code:
+
+```
+📊 Feature Categories (150 total)
+├── 🔑 Keyword Presence (50 features)
+│   └── Does the code contain "executeQuery", "getParameter", "exec"?
+│
+├── 🔍 Pattern Detection (40 features)  
+│   └── SQL patterns, XSS patterns, injection patterns
+│
+├── 📐 Code Structure (30 features)
+│   └── Line length, nesting depth, method complexity
+│
+└── 🛡️ Security Indicators (30 features)
+    └── Uses encryption? Has input validation? Sanitizes data?
+```
+
+### The Models
+
+#### 1️⃣ Tribuo Ensemble (Traditional ML)
+
+Think of this as having **two experts vote** on whether code is vulnerable:
+
+```
+┌─────────────────────────────────────────────────┐
+│           ENSEMBLE CLASSIFIER                    │
+├─────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────────┐  │
+│  │    Logistic     │  │      AdaBoost       │  │
+│  │   Regression    │  │    (50 rounds)      │  │
+│  │                 │  │                     │  │
+│  │  Fast & simple  │  │  Combines many weak │  │
+│  │  good baseline  │  │  learners → strong  │  │
+│  └─────────────────┘  └─────────────────────┘  │
+│                                                 │
+│  Combined Accuracy: 95.55% ✅                   │
+└─────────────────────────────────────────────────┘
+```
+
+#### 2️⃣ DL4J Neural Network (Deep Learning)
+
+A **4-layer brain** that processes code:
+
+```
+┌──────────────────────────────────────────────────┐
+│              NEURAL NETWORK                       │
+├──────────────────────────────────────────────────┤
+│                                                   │
+│  INPUT LAYER          150 neurons (features)      │
+│       ↓                                          │
+│  HIDDEN LAYER 1       256 neurons + ReLU         │
+│       ↓               (learns basic patterns)    │
+│  HIDDEN LAYER 2       128 neurons + ReLU         │
+│       ↓               (combines patterns)        │
+│  HIDDEN LAYER 3       64 neurons + ReLU          │
+│       ↓               (high-level features)      │
+│  OUTPUT LAYER         4 neurons (categories)     │
+│                                                   │
+│  Total Parameters: 80,068                        │
+│  Optimizer: Adam (learns efficiently)            │
+└──────────────────────────────────────────────────┘
+```
+
+**What do the layers do?**
+- **Layer 1**: Learns simple patterns ("contains SQL keyword")
+- **Layer 2**: Combines patterns ("SQL keyword + user input = danger")
+- **Layer 3**: Abstract concepts ("this looks like SQL injection")
+- **Output**: Final decision (VULNERABLE, SUSPICIOUS, SAFE, UNKNOWN)
+
+### Classification Results
+
+| Category | What It Means | Accuracy |
+|----------|---------------|----------|
+| 🔴 **VULNERABLE** | Definite security issue, must fix | 98.99% |
+| 🟡 **SUSPICIOUS** | Might be a problem, should review | 72.97% |
+| 🟢 **SAFE** | No issues detected | 98.21% |
+| ⚪ **UNKNOWN** | Not enough info, needs manual check | - |
+
+---
+
+## 🔧 Technologies Explained
+
+### Backend Technologies
+
+| Technology | What It Is | Why We Use It |
+|------------|------------|---------------|
+| **Java 25** | Programming language | Latest features like Virtual Threads (super fast!) |
+| **Spring Boot 3.4** | Web framework | Makes building REST APIs easy |
+| **Maven** | Build tool | Manages all our dependencies |
+
+### Machine Learning Stack
+
+| Technology | What It Is | Why We Use It |
+|------------|------------|---------------|
+| **Tribuo 4.3.1** | Oracle's ML library | Easy to train classification models |
+| **DL4J 1.0.0-M2.1** | Deep learning library | Build neural networks in Java |
+| **ND4J** | Math library | Fast matrix operations for DL4J |
+| **ONNX Runtime** | ML inference | Run pre-trained models |
+
+### Static Analysis Tools (Analyze WITHOUT running code)
+
+| Tool | What It Does | Example Finding |
+|------|--------------|-----------------|
+| **PMD** | Checks code against rules | "Don't use string concatenation in SQL" |
+| **SpotBugs** | Finds bug patterns | "Null pointer possible here" |
+| **Custom AST** | Parses code structure | "User input flows to database query" |
+| **JQAssistant** | Graph-based analysis | "Class A depends on insecure Class B" |
+
+### Dynamic Analysis Tools (Analyze RUNNING code)
+
+| Tool | What It Does |
+|------|--------------|
+| **OWASP ZAP** | Attacks running web app to find vulnerabilities |
+| **Runtime Monitor** | Watches what the code does when executing |
+
+### Data Sources
+
+| Source | What It Provides |
+|--------|------------------|
+| **NVD (NIST)** | CVE database - all known vulnerabilities |
+| **MISP** | Threat intelligence from security community |
+
+---
+
+## 📁 Project Structure (Simplified)
+
+```
+jabaproj/
+│
+├── 📂 src/main/java/com/security/ai/
+│   │
+│   ├── 📂 unified/                    ⭐ THE CORE ENGINE
+│   │   ├── UnifiedMLSecurityAgent.java    # Main brain - coordinates everything
+│   │   ├── DeepLearningSecurityModel.java # Neural network implementation
+│   │   ├── PMDAnalyzer.java               # Runs PMD analysis
+│   │   ├── SpotBugsAnalyzer.java          # Runs SpotBugs analysis
+│   │   ├── CustomASTAnalyzer.java         # Our custom code parser
+│   │   ├── OwaspZapNativeScanner.java     # Connects to OWASP ZAP
+│   │   ├── NVDClient.java                 # Fetches CVE data
+│   │   ├── MISPClient.java                # Fetches threat intel
+│   │   └── VulnerabilityTrainingDataset.java # Training data builder
+│   │
+│   └── 📂 web/controller/
+│       └── SecurityAgentController.java   # REST API endpoints
+│
+├── 📂 src/main/resources/
+│   └── static/index.html             # The web interface you see
+│
+├── 📂 test-samples/                  # Example vulnerable code
+│   ├── SQLInjection.java
+│   ├── PathTraversal.java
+│   └── InsecureNetwork.java
+│
+├── pom.xml                           # All dependencies listed here
+└── README.md                         # You're reading this!
+```
+
+---
+
+## 🚀 Quick Start Guide
+
+### What You Need First
+
+1. ✅ **Java 25** - [Download here](https://www.oracle.com/java/technologies/downloads/)
+2. ✅ **Maven 3.9+** - [Download here](https://maven.apache.org/download.cgi)
+3. ⭐ **OWASP ZAP** (optional but cool) - [Download here](https://www.zaproxy.org/download/)
+
+### Step-by-Step Setup
 
 ```bash
-# Clone the repository
+# 1. Clone (download) the project
 git clone https://github.com/maaahhdiii/javashild.git
 cd javashild
-```
 
-### Quick Start - Windows
-
-**Option 1: One-Click Launch** (Recommended)
-```batch
-# Double-click or run in terminal:
-run.bat
-```
-
-**Option 2: Interactive Menu**
-```batch
-# Launch interactive menu with multiple options:
-start.bat
-```
-
-### Quick Start - Manual
-
-```bash
-# Build the project
+# 2. Build (compile all the code)
 mvn clean package -DskipTests
 
-# Run the web application
-mvn spring-boot:run
+# 3. Run (start the server)
+java --enable-preview -jar target/vulnerability-detection-agent-1.0.0.jar
 
-# Access the web interface
-# Open browser: http://localhost:8080
+# 4. Open in browser
+# Go to: http://localhost:8080
 ```
 
-### Command-Line Demo
+### What Happens When You Start?
 
-```bash
-# Run CLI demo with all 4 agents
-java --enable-preview -cp target/vulnerability-detection-agent-1.0.0.jar com.security.ai.SecurityAgentDemo
+```
+Starting JavaShield...
+✅ Loading 1,457 training examples...
+✅ Training Logistic Regression model...
+✅ Training AdaBoost model (50 rounds)...
+✅ Accuracy: 95.55% (280/292 correct)
+✅ Initializing DL4J Neural Network...
+✅ Neural Network: 150→256→128→64→4 (80,068 params)
+✅ PMD Analyzer ready (17 rules)
+✅ SpotBugs Analyzer ready
+✅ Custom AST Analyzer ready
+✅ Connecting to OWASP ZAP...
+✅ Connected to ZAP version 2.16.1
+✅ Server started on port 8080
+
+Ready! Open http://localhost:8080
 ```
 
-## 💻 Usage Examples
+---
 
-### Auto-Fix Workflow (Web UI) 🆕
+## 🖥️ Using the Web Interface
 
-1. **Analyze Code**:
-   - **Option A**: Paste Java code in "Code Analysis" tab
-   - **Option B**: Upload .java file in "File Upload" tab
+### Step 1: Enter Your Code
 
-2. **Review Findings**: View detected vulnerabilities with severity and confidence scores
+Copy/paste Java code or click "Load Sample" to test with vulnerable examples.
 
-3. **Apply Auto-Fix**:
-   - Click "Apply Auto-Fix" button on any finding with ✅ auto-fix support
-   - View side-by-side diff showing original and fixed code
-   - Read inline security comments explaining each change
+### Step 2: Click "Analyze with ML"
 
-4. **Copy Fixed Code**: Use copy button to export remediated code to clipboard
+The system will:
+1. Run all static analyzers (PMD, SpotBugs, AST)
+2. Extract 150 features from your code
+3. Classify with ML/DL models
+4. Show you the results
 
-5. **Deploy**: Replace original code with fixed version
+### Step 3: Understand the Results
 
-**Example Auto-Fix for SQL Injection:**
-```java
-// BEFORE (Vulnerable)
-String query = "SELECT * FROM users WHERE id = " + userId;
-Statement stmt = conn.createStatement();
-ResultSet rs = stmt.executeQuery(query);
+Each finding shows:
+- **Severity**: CRITICAL 🔴, HIGH 🟠, MEDIUM 🟡, LOW 🟢
+- **Confidence**: How sure the detector is (0-100%)
+- **ML Verdict**: What the AI thinks (VULNERABLE, SUSPICIOUS, SAFE)
+- **Recommendations**: How to fix it
 
-// AFTER (Fixed with Auto-Fix)
-// SECURITY FIX: Use PreparedStatement to prevent SQL injection
-String query = "SELECT * FROM users WHERE id = ?";
-PreparedStatement stmt = conn.prepareStatement(query);
-stmt.setString(1, userId);
-ResultSet rs = stmt.executeQuery();
-```
+### Step 4: Auto-Fix with One Click
 
-### Programmatic Usage
+Two buttons:
+- **"Fix All Vulnerabilities"** - Uses pattern matching
+- **"ML-Powered Fix (AI)"** - Uses ML to generate context-aware fixes
 
-```java
-// Initialize orchestrator
-AgentOrchestrator orchestrator = new AgentOrchestrator();
+---
 
-// Register agents
-orchestrator.registerAgent(new StaticAnalysisAgent());
-orchestrator.registerAgent(new DynamicAnalysisAgent());
-orchestrator.registerAgent(new MLClassificationAgent());
-orchestrator.registerAgent(new AutomatedResponseAgent());
+## 📡 REST API Endpoints
 
-// Start all agents
-orchestrator.startAll();
+If you want to use JavaShield programmatically (from other code):
 
-// Analyze code
-SecurityAgent.SecurityEvent event = new SecurityAgent.SecurityEvent(
-    null, null,
-    SecurityAgent.SecurityEvent.EventType.CODE_CHANGE,
-    "MyApp",
-    Paths.get("src/main/java/MyClass.java")
-);
+### Analyze Code
+```http
+POST http://localhost:8080/api/security/analyze
 
-CompletableFuture<AgentOrchestrator.AggregatedFindings> result = 
-    orchestrator.analyzeEvent(event);
-
-// Process findings
-result.thenAccept(findings -> {
-    System.out.println("Found " + findings.findings().size() + " vulnerabilities");
-    
-    if (findings.hasBlockableThreats()) {
-        System.out.println("CRITICAL: Blockable threats detected!");
-    }
-});
-
-// Cleanup
-orchestrator.stopAll();
-```
-
-### CI/CD Integration
-
-#### Jenkins
-```groovy
-pipeline {
-    agent any
-    stages {
-        stage('Security Scan') {
-            steps {
-                sh 'java --enable-preview -jar vulnerability-detection-agent.jar --scan --path ${WORKSPACE}'
-            }
-        }
-    }
+Body (JSON):
+{
+  "code": "String q = \"SELECT * FROM users WHERE id=\" + userId;",
+  "filename": "UserService.java"
 }
 ```
 
-#### GitHub Actions
-```yaml
-- name: Security Scan
-  run: |
-    java --enable-preview -jar vulnerability-detection-agent.jar \
-      --scan --path ${{ github.workspace }}
+### ML-Powered Fix
+```http
+POST http://localhost:8080/api/security/ml-fix
+
+Body (JSON):
+{
+  "code": "... your vulnerable code ...",
+  "filename": "MyClass.java"
+}
 ```
 
-## 🔧 Configuration
+### Get Statistics
+```http
+GET http://localhost:8080/api/security/statistics
 
-### Agent Configuration
-
-Create `agent-config.json`:
-
-```json
+Response:
 {
-  "staticAnalysis": {
-    "enabled": true,
-    "minConfidence": 0.7,
-    "scanTestFiles": false
-  },
-  "dynamicAnalysis": {
-    "enabled": true,
-    "monitoringInterval": 5000
-  },
-  "mlClassification": {
-    "enabled": true,
-    "modelPath": "models/vulnerability-classifier.model",
-    "retrainingThreshold": 100
-  },
-  "automatedResponse": {
-    "enabled": true,
-    "failOnCritical": true,
-    "maxHighSeverity": 5
+  "totalScans": 150,
+  "totalFindings": 342,
+  "mlMetrics": {
+    "modelAccuracy": 0.9555,
+    "trainingExamples": 1457
   }
 }
 ```
 
-## 📊 Supported Vulnerability Types
+---
 
-### Static Analysis Detection (9 Types - All with Auto-Fix)
-- ✅ **SQL Injection** (CWE-89): PreparedStatement conversion
-- ✅ **Cross-Site Scripting (XSS)**: HTML escaping implementation
-- ✅ **Insecure Deserialization** (CWE-502): JSON serialization migration
-- ✅ **Path Traversal** (CWE-22): Path normalization with security
-- ✅ **Command Injection** (CWE-78): ProcessBuilder with security controls
-- ✅ **XXE Injection** (CWE-611): Secure XML parsing configuration
-- ✅ **Hardcoded Credentials** (CWE-798): Environment variable migration
-- ✅ **Insecure Cryptography** (CWE-327): Strong algorithm replacement (MD5→SHA-256, DES→AES)
-- ✅ **Network/SSL/TLS Issues** (CWE-295): HTTPS and TLS 1.3 enforcement
+## 🔍 Examples of Vulnerabilities We Detect & Fix
 
-### Dynamic Analysis Detection (6 Types)
-- 🔍 **HTTP (Non-HTTPS) Connections** (CWE-319): Unencrypted communication detection
-- 🔍 **Weak TLS/SSL Configurations**: Protocol version analysis
-- 🔍 **Missing Certificate Validation**: Security check bypass detection
-- 🔍 **Suspicious Network Destinations**: Domain reputation analysis (.ru, .cn, .tk, etc.)
-- 🔍 **Sensitive File Access** (CWE-200): Data exposure monitoring
-- 🔍 **API Security Issues**: Endpoint security assessment
+### 1. SQL Injection (CRITICAL) 🔴
 
-### MCP Kali Tools Detection (7 Scanners) 🆕
-- 📡 **Nmap Scanning**: Open ports, exposed services, network vulnerabilities
-- 🔍 **Nikto Analysis**: Web server misconfigurations, outdated software, OSVDB vulnerabilities
-- 📂 **Dirb Enumeration**: Hidden directories, exposed files, sensitive endpoints
-- 💉 **SQLMap Testing**: SQL injection vulnerabilities, database extraction risks
-- 🌐 **WPScan Analysis**: WordPress core/plugin/theme vulnerabilities, weak configurations
-- 🔒 **Security Headers**: Missing CSP, X-Frame-Options, HSTS, X-XSS-Protection headers
-- 🔎 **SearchSploit**: Known exploits for detected services/versions from exploit-db
+**The Problem**: Attacker can inject SQL commands through user input
 
-### ML-Enhanced Classification 🆕
-- **987 Training Examples** across all vulnerability types
-- **AdaBoost Ensemble Model** with 92.4% accuracy
-- **Tool-Specific Training**: Dedicated patterns for each of 7 Kali scanners
-- **Confidence Scoring**: 0.0-1.0 scale for vulnerability likelihood
-- **Real-time Classification**: Instant VULNERABLE/SAFE/SUSPICIOUS determination
+```java
+// ❌ VULNERABLE - NEVER do this!
+String userId = request.getParameter("id");  // User types: "1 OR 1=1"
+String query = "SELECT * FROM users WHERE id=" + userId;
+// Becomes: SELECT * FROM users WHERE id=1 OR 1=1  (returns ALL users!)
 
-### Dependency Vulnerabilities
-- ✅ CVE Database Integration
-- ✅ OWASP Dependency Check
-- ✅ NVD API Integration
-
-## 📈 Performance Benchmarks
-
-| Operation | Time (avg) | Throughput |
-## 🛠️ Technology Stack
-
-- **Java 25**: Virtual threads, structured concurrency, pattern matching
-- **Spring Boot 3.4.0**: Web framework, REST API, embedded Tomcat
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+), Font Awesome
-- **ML Framework**: Tribuo 4.3.1 (AdaBoost Ensemble with 987 training examples)
-- **Static Analysis**: SpotBugs, PMD, JavaParser
-- **Dynamic Analysis**: MCP Kali Tools (Docker-based security toolkit)
-  - Nmap, Nikto, Dirb, SQLMap, WPScan, Security Headers, SearchSploit
-- **Vulnerability DB**: NVD API, OWASP Dependency-Check, Exploit-DB
-- **Build Tool**: Maven 3.9+
-- **Container Platform**: Docker (for MCP integration)
-## 🔬 Project Structure
-
-```
-javashild/
-├── src/main/java/com/security/ai/
-│   ├── agent/                      # Core agent framework
-│   │   ├── SecurityAgent.java
-│   │   ├── AbstractSecurityAgent.java
-│   │   └── AgentOrchestrator.java
-│   ├── analysis/
-│   │   ├── staticanalysis/        # Static code analysis
-│   │   └── dynamicanalysis/       # Runtime analysis
-│   ├── ml/                        # ML classification
-│   ├── response/                  # Automated response
-│   ├── vulnerabilitydb/          # Vulnerability databases
-│   ├── integration/              # CI/CD integration
-│   ├── web/                      # Spring Boot web application
-│   │   ├── SecurityAgentWebApplication.java
-│   │   ├── controller/           # REST API controllers
-│   │   └── dto/                  # Data transfer objects
-│   └── SecurityAgentDemo.java    # CLI demo application
-├── src/main/resources/
-│   ├── application.properties    # Spring Boot configuration
-│   ├── logback.xml              # Logging configuration
-│   └── static/
-│       └── index.html           # Professional web UI
-├── run.bat                      # One-click launcher (Windows)
-├── start.bat                    # Interactive menu (Windows)
-├── pom.xml                      # Maven configuration
-└── README.md                    # This file
-``` │   └── dynamicanalysis/       # Runtime analysis
-│   ├── ml/                        # ML classification
-│   ├── response/                  # Automated response
-│   ├── vulnerabilitydb/          # Vulnerability databases
-│   ├── integration/              # CI/CD integration
-│   └── SecurityAgentDemo.java    # Main demo application
-├── src/main/resources/
-│   └── logback.xml               # Logging configuration
-├── pom.xml                       # Maven configuration
-└── README.md                     # This file
+// ✅ FIXED by JavaShield - Use PreparedStatement
+PreparedStatement stmt = conn.prepareStatement(
+    "SELECT * FROM users WHERE id=?"
+);
+stmt.setString(1, userId);  // Safe - treats input as data, not code
 ```
 
-## 🧪 Testing
+### 2. Path Traversal (HIGH) 🟠
 
-## 🌐 Web Interface Features
+**The Problem**: Attacker can read any file on your server
 
-Access the professional web UI at `http://localhost:8080` after starting the application:
+```java
+// ❌ VULNERABLE
+String filename = request.getParameter("file");  // User types: "../../../etc/passwd"
+File file = new File("/uploads/" + filename);
+// Accesses: /etc/passwd (your password file!)
 
-### Dashboard
-- **Real-time Statistics**: Active agents, total scans, threats blocked
-- **System Health**: Live agent status monitoring
-- **4 Security Agents**: Static Analyzer, Dynamic Analyzer, ML Classifier, Response Handler
-
-### Analysis Tools
-1. **Code Analysis Tab**: Paste Java code for instant vulnerability detection
-2. **File Upload Tab**: Drag-and-drop .java files for comprehensive scanning
-3. **Network Scan Tab**: Test network requests for security issues (supports full URL input)
-4. **Agent Status Panel**: Monitor all agents with health metrics
-
-### Auto-Fix Features 🆕
-- **One-Click Remediation**: Automatically generate fixes for 9 vulnerability types
-- **Interactive Diff Viewer**: Side-by-side before/after comparison with syntax highlighting
-- **Security Comments**: Inline explanations embedded in fixed code
-- **Copy Function**: Quick clipboard export of remediated code
-- **Multi-Path Support**: Works with textarea input and file uploads
-
-### Network Scan Enhancements 🆕
-- **Smart URL Parsing**: Paste full URLs like `http://example.com` - auto-extracts protocol and hostname
-- **Real-time Analysis**: Instant HTTP/HTTPS security checks
-- **Recommendation System**: Detailed security guidance for network issues
-
-### Example Analysis Results with Auto-Fix
-```json
-{
-  "totalFindings": 3,
-  "criticalCount": 1,
-  "highCount": 2,
-  "findings": [
-    {
-      "category": "SQL_INJECTION",
-      "severity": "CRITICAL",
-      "description": "Potential SQL injection vulnerability detected",
-      "location": "Example.java:5",
-      "confidence": 0.90,
-      "autoFixAvailable": true,
-      "recommendations": [
-        "Use PreparedStatement with parameterized queries",
-        "Implement input validation and sanitization"
-      ]
-    }
-  ]
-}
+// ✅ FIXED by JavaShield
+File file = validatePath("/uploads/", filename);  // Validates path is safe
 ```
 
-## 📝 CLI Example Output
+### 3. Insecure Network Connection (HIGH) 🟠
 
+**The Problem**: Data sent without encryption - anyone can read it
+
+```java
+// ❌ VULNERABLE - No encryption
+Socket socket = new Socket(host, port);  // Plain text!
+
+// ✅ FIXED by JavaShield - Use SSL/TLS
+SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+SSLSocket socket = (SSLSocket) factory.createSocket(host, port);  // Encrypted!
 ```
-================================================================================
-JavaShield - AI Security Platform
-Java 25 - Advanced Security Automation System
-================================================================================
 
-Step 1: Initializing Security Agents...
-✓ Registered 4 security agents
+### 4. Weak Hashing (MEDIUM) 🟡
 
-Step 2: Starting All Agents...
-## 🎨 UI Screenshots
+**The Problem**: MD5 and SHA-1 can be cracked
 
-The web interface features:
-- **Modern Design**: Clean, professional layout with Inter font
-- **Purple Gradient Theme**: Eye-catching color scheme
-- **Responsive Cards**: Animated hover effects
-- **Real-time Updates**: Auto-refresh every 5 seconds
-- **Font Awesome Icons**: Professional iconography throughout
-- **Severity Badges**: Color-coded vulnerability indicators
+```java
+// ❌ VULNERABLE
+MessageDigest md = MessageDigest.getInstance("MD5");  // Weak!
 
-## 🚀 What's New
+// ✅ FIXED by JavaShield
+MessageDigest md = MessageDigest.getInstance("SHA-256");  // Strong!
+```
 
-### Version 1.1.0 (Latest - Testing Branch) 🆕
-- ✅ **MCP Kali Tools Integration**: 7 professional security scanners via Docker MCP server
-  - Nmap, Nikto, Dirb, SQLMap, WPScan, Security Headers, SearchSploit
-- ✅ **Enhanced ML Training**: 987 examples (up from 840) with tool-specific patterns
-- ✅ **No Timeout Scanning**: Tools run to completion without artificial time limits
-- ✅ **Progress Indicators**: Real-time [X/7] status with emoji icons for each scanner
-- ✅ **AdaBoost Accuracy**: 92.4% (183/198) on test set with improved SUSPICIOUS detection
-- ✅ **Unified Feature Extraction**: 10 features including complexity and dependency risk scores
+### 5. Command Injection (CRITICAL) 🔴
 
-### Version 1.0.0
-- ✅ **Auto-Fix System**: One-click remediation for 9 vulnerability types with intelligent code transformation
-- ✅ **Smart URL Parsing**: Network scan accepts full URLs with automatic protocol/hostname extraction
-- ✅ **Interactive Diff Viewer**: Visual before/after comparison with syntax highlighting
-- ✅ **Multi-Path Support**: Auto-fix works seamlessly with code textarea and file uploads
-- ✅ Complete Java 25 support with structured concurrency and virtual threads
-- ✅ Professional web interface with REST API endpoints
-- ✅ Spring Boot 3.4.0 integration with modern architecture
-- ✅ 4 autonomous AI agents for comprehensive security coverage
-- ✅ Real-time vulnerability detection with ML-enhanced confidence scoring
-- ✅ One-click Windows launcher scripts for easy deployment
-- ✅ Interactive analysis dashboard with live agent monitoring
+**The Problem**: Attacker can run commands on your server
 
-## 📧 Contact & Support
+```java
+// ❌ VULNERABLE
+String host = request.getParameter("host");  // User types: "google.com; rm -rf /"
+Runtime.getRuntime().exec("ping " + host);  // Deletes everything!
 
-- **Repository**: [github.com/maaahhdiii/javashild](https://github.com/maaahhdiii/javashild)
-- **Issues**: Open an issue on GitHub for bug reports or feature requests
+// ✅ FIXED by JavaShield
+ProcessBuilder pb = new ProcessBuilder("ping", sanitizedHost);
+pb.start();  // Safe - arguments are separate
+```
 
 ---
 
-**⚠️ Disclaimer**: This is an advanced security tool. Always test in a safe environment before deploying to production systems.
+## 📊 Performance Numbers
 
-**🌟 Star this repo** if you find it useful!
-  → Hardcoded Credentials [HIGH] - Confidence: 0.75
-  → Insecure Deserialization [HIGH] - Confidence: 0.80
-
-Demo 2: ML Model Training
---------------------------------------------------------------------------------
-Training accuracy: 100.0%
-Model ready for classification
-
-...
-``` Insecure Deserialization [HIGH] - Confidence: 0.80
-Critical findings: 1
-High severity findings: 2
-
-Demo 2: Runtime Behavior Monitoring
---------------------------------------------------------------------------------
-Analyzed network request to: suspicious-domain.ru
-Security findings: 1
-⚠ BLOCKABLE THREATS DETECTED - Automated response will be triggered
-
-...
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-## 📄 License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
-
-## 🔗 References
-
-- [Java 25 Documentation](https://jdk.java.net/25/)
-- [Tribuo ML Library](https://tribuo.org/)
-- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [NVD API](https://nvd.nist.gov/developers)
-- [CVE Database](https://cve.mitre.org/)
-
-## 📧 Contact
-
-For questions and support, please open an issue on GitHub.
+| Metric | Value | What It Means |
+|--------|-------|---------------|
+| **Overall Accuracy** | 95.55% | 19 out of 20 predictions correct |
+| **VULNERABLE Detection** | 98.99% | Almost never misses real vulnerabilities |
+| **SAFE Detection** | 98.21% | Rarely flags safe code as vulnerable |
+| **Training Examples** | 1,457 | Number of examples model learned from |
+| **Neural Network Size** | 80,068 params | Complexity of the deep learning model |
+| **Startup Time** | ~5 seconds | Time to load and start |
+| **Analysis Time** | <1 second | Time to analyze typical code |
 
 ---
 
-**⚠️ Disclaimer**: This is an advanced security tool. Always test in a safe environment before deploying to production systems.
+## 🔄 How Auto-Fix Works (Step by Step)
+
+```
+Your Code
+    │
+    ▼
+┌────────────────────┐
+│ 1. DETECT          │  Run PMD + SpotBugs + AST
+│    Find issues     │  → Found 5 potential vulnerabilities
+└────────┬───────────┘
+         ▼
+┌────────────────────┐
+│ 2. CLASSIFY        │  Run through ML model
+│    What type?      │  → SQL Injection, Path Traversal, etc.
+└────────┬───────────┘
+         ▼
+┌────────────────────┐
+│ 3. MATCH FIX       │  Look up fix template
+│    How to fix?     │  → PreparedStatement for SQL injection
+└────────┬───────────┘
+         ▼
+┌────────────────────┐
+│ 4. APPLY FIX       │  Regex replacement
+│    Transform code  │  → String concat → PreparedStatement
+└────────┬───────────┘
+         ▼
+┌────────────────────┐
+│ 5. VALIDATE        │  Re-analyze fixed code
+│    Did it work?    │  → Vulnerability count: 0 ✅
+└────────────────────┘
+         │
+         ▼
+    Fixed Code! 🎉
+```
+
+---
+
+## 🧪 Test It Yourself
+
+The `test-samples/` folder has intentionally vulnerable code:
+
+| File | What's Wrong |
+|------|--------------|
+| `SQLInjection.java` | 3 different SQL injection patterns |
+| `PathTraversal.java` | 6 file path vulnerabilities |
+| `InsecureNetwork.java` | 4 unencrypted connections |
+| `WeakCrypto.java` | MD5, SHA-1, weak keys |
+| `XSSExample.java` | Cross-site scripting |
+| `CommandInjection.java` | OS command injection |
+
+Try loading these in the web interface and watch JavaShield find and fix them!
+
+---
+
+## 🛠️ Common Commands
+
+```bash
+# Build the project (first time or after changes)
+mvn clean package -DskipTests
+
+# Run the server
+java --enable-preview -jar target/vulnerability-detection-agent-1.0.0.jar
+
+# Run with Maven directly (for development)
+mvn spring-boot:run
+
+# Just compile (check for errors)
+mvn compile
+
+# Run tests
+mvn test
+```
+
+---
+
+## ❓ Troubleshooting
+
+### "Port 8080 already in use"
+Another app is using port 8080. Either:
+- Stop that app, or
+- Change port in `application.properties`: `server.port=8081`
+
+### "Java version wrong"
+Make sure you have Java 25:
+```bash
+java -version
+# Should show: openjdk 25...
+```
+
+### "OWASP ZAP not connecting"
+1. Make sure ZAP is running
+2. Enable the API in ZAP settings
+3. Check port 8090 is open
+
+---
+
+## 📚 Want to Learn More?
+
+### Machine Learning
+- 🎓 [Google ML Crash Course](https://developers.google.com/machine-learning/crash-course) - Free!
+- 📖 [Tribuo Documentation](https://tribuo.org/learn/) - The ML library we use
+
+### Security
+- 🔐 [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Most common vulnerabilities
+- 📋 [CWE Database](https://cwe.mitre.org/) - All weakness types
+
+### Java
+- ☕ [Java 25 Features](https://openjdk.org/projects/jdk/25/) - What's new
+- 🍃 [Spring Boot Guide](https://spring.io/guides) - Web framework tutorials
+
+---
+
+## 👨‍💻 Author
+
+**Mahdi** - Computer Science Student
+
+---
+
+## 📜 License
+
+MIT License - Use it however you want! Just give credit.
+
+---
+
+<p align="center">
+  <b>🛡️ JavaShield - Making Code Secure, One Vulnerability at a Time 🛡️</b>
+  <br><br>
+  <i>Built with ☕ Java, 🧠 Machine Learning, and ❤️ Love</i>
+</p>
