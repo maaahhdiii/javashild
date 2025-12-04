@@ -18,8 +18,8 @@ JavaShield is an intelligent AI-driven security platform that automatically dete
 
 ### 🔍 Multi-Layer Detection
 - **Static Analysis**: AST parsing with 9 vulnerability types
-- **Dynamic Analysis**: Runtime behavior monitoring
-- **ML Classification**: Tribuo-based risk assessment
+- **Dynamic Analysis**: Runtime behavior monitoring + **MCP Kali Tools Integration** 🆕
+- **ML Classification**: Tribuo-based risk assessment trained on 987 examples
 - **Auto-Remediation**: Intelligent code fixing for detected vulnerabilities
 
 ### 🤖 Autonomous Agents
@@ -34,12 +34,25 @@ JavaShield is an intelligent AI-driven security platform that automatically dete
 - Automated alerting system
 - Interactive diff viewer for code changes
 
+### 🔐 MCP Kali Tools Integration 🆕
+- **7 Professional Security Scanners** via Docker MCP server:
+  - 📡 **Nmap**: Port scanning & service detection
+  - 🔍 **Nikto**: Web server vulnerability scanning
+  - 📂 **Dirb**: Directory enumeration & discovery
+  - 💉 **SQLMap**: SQL injection detection & exploitation
+  - 🌐 **WPScan**: WordPress vulnerability scanner
+  - 🔒 **Security Headers**: HTTP security headers analysis
+  - 🔎 **SearchSploit**: Exploit database search
+- **No Timeout Scanning**: Tools run to completion without time limits
+- **Progress Indicators**: Real-time [X/7] status with emoji icons
+- **ML-Enhanced Classification**: AdaBoost model trained on all 7 tool outputs
+
 ### 🌐 Professional Web Interface
 - Modern, responsive UI with dark theme
 - Real-time agent monitoring dashboard
 - **3 Analysis Modes**: Code input, file upload, network scanning
 - **Auto-Fix Feature**: One-click vulnerability remediation
-- Live vulnerability detection with confidence scores
+- Live vulnerability detection with ML confidence scores
 - Copy-to-clipboard functionality
 
 ### 🔄 CI/CD Integration
@@ -83,6 +96,8 @@ JavaShield is an intelligent AI-driven security platform that automatically dete
 ### Prerequisites
 - **Java 25** (with preview features enabled) - [Download here](https://jdk.java.net/25/)
 - **Maven 3.9+**
+- **Docker** (for MCP Kali Tools integration) - [Download here](https://www.docker.com/products/docker-desktop/)
+- **Kali Security MCP Server** (Docker image): `kali-security-mcp-server:latest`
 - Network access for vulnerability database queries (optional)
 
 ### Installation
@@ -275,6 +290,22 @@ Create `agent-config.json`:
 - 🔍 **Sensitive File Access** (CWE-200): Data exposure monitoring
 - 🔍 **API Security Issues**: Endpoint security assessment
 
+### MCP Kali Tools Detection (7 Scanners) 🆕
+- 📡 **Nmap Scanning**: Open ports, exposed services, network vulnerabilities
+- 🔍 **Nikto Analysis**: Web server misconfigurations, outdated software, OSVDB vulnerabilities
+- 📂 **Dirb Enumeration**: Hidden directories, exposed files, sensitive endpoints
+- 💉 **SQLMap Testing**: SQL injection vulnerabilities, database extraction risks
+- 🌐 **WPScan Analysis**: WordPress core/plugin/theme vulnerabilities, weak configurations
+- 🔒 **Security Headers**: Missing CSP, X-Frame-Options, HSTS, X-XSS-Protection headers
+- 🔎 **SearchSploit**: Known exploits for detected services/versions from exploit-db
+
+### ML-Enhanced Classification 🆕
+- **987 Training Examples** across all vulnerability types
+- **AdaBoost Ensemble Model** with 92.4% accuracy
+- **Tool-Specific Training**: Dedicated patterns for each of 7 Kali scanners
+- **Confidence Scoring**: 0.0-1.0 scale for vulnerability likelihood
+- **Real-time Classification**: Instant VULNERABLE/SAFE/SUSPICIOUS determination
+
 ### Dependency Vulnerabilities
 - ✅ CVE Database Integration
 - ✅ OWASP Dependency Check
@@ -288,10 +319,13 @@ Create `agent-config.json`:
 - **Java 25**: Virtual threads, structured concurrency, pattern matching
 - **Spring Boot 3.4.0**: Web framework, REST API, embedded Tomcat
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+), Font Awesome
-- **ML Framework**: Tribuo 4.3.1
+- **ML Framework**: Tribuo 4.3.1 (AdaBoost Ensemble with 987 training examples)
 - **Static Analysis**: SpotBugs, PMD, JavaParser
-- **Vulnerability DB**: NVD API, OWASP Dependency-Check
+- **Dynamic Analysis**: MCP Kali Tools (Docker-based security toolkit)
+  - Nmap, Nikto, Dirb, SQLMap, WPScan, Security Headers, SearchSploit
+- **Vulnerability DB**: NVD API, OWASP Dependency-Check, Exploit-DB
 - **Build Tool**: Maven 3.9+
+- **Container Platform**: Docker (for MCP integration)
 ## 🔬 Project Structure
 
 ```
@@ -409,6 +443,15 @@ The web interface features:
 - **Severity Badges**: Color-coded vulnerability indicators
 
 ## 🚀 What's New
+
+### Version 1.1.0 (Latest - Testing Branch) 🆕
+- ✅ **MCP Kali Tools Integration**: 7 professional security scanners via Docker MCP server
+  - Nmap, Nikto, Dirb, SQLMap, WPScan, Security Headers, SearchSploit
+- ✅ **Enhanced ML Training**: 987 examples (up from 840) with tool-specific patterns
+- ✅ **No Timeout Scanning**: Tools run to completion without artificial time limits
+- ✅ **Progress Indicators**: Real-time [X/7] status with emoji icons for each scanner
+- ✅ **AdaBoost Accuracy**: 92.4% (183/198) on test set with improved SUSPICIOUS detection
+- ✅ **Unified Feature Extraction**: 10 features including complexity and dependency risk scores
 
 ### Version 1.0.0
 - ✅ **Auto-Fix System**: One-click remediation for 9 vulnerability types with intelligent code transformation
