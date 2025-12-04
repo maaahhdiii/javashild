@@ -100,16 +100,18 @@ public interface SecurityAgent {
      * Security finding result from agent analysis
      */
     record SecurityFinding(
-        String findingId,
-        Instant detectedAt,
-        Severity severity,
-        String category,
-        String description,
-        String location,
-        String cveId,
-        double confidenceScore,
-        List<String> recommendations,
-        boolean autoRemediationPossible
+        @com.fasterxml.jackson.annotation.JsonProperty("findingId") String findingId,
+        @com.fasterxml.jackson.annotation.JsonProperty("detectedAt") Instant detectedAt,
+        @com.fasterxml.jackson.annotation.JsonProperty("severity") Severity severity,
+        @com.fasterxml.jackson.annotation.JsonProperty("category") String category,
+        @com.fasterxml.jackson.annotation.JsonProperty("description") String description,
+        @com.fasterxml.jackson.annotation.JsonProperty("location") String location,
+        @com.fasterxml.jackson.annotation.JsonProperty("cveId") String cveId,
+        @com.fasterxml.jackson.annotation.JsonProperty("confidenceScore") double confidenceScore,
+        @com.fasterxml.jackson.annotation.JsonProperty("recommendations") List<String> recommendations,
+        @com.fasterxml.jackson.annotation.JsonProperty("autoRemediationPossible") boolean autoRemediationPossible,
+        @com.fasterxml.jackson.annotation.JsonProperty("detectionSource") String detectionSource,  // "STATIC: PMD", "STATIC: CustomAST", "DYNAMIC: Runtime Monitor", etc.
+        @com.fasterxml.jackson.annotation.JsonProperty("fixCode") String fixCode  // Auto-fix code if available, null otherwise
     ) {
         public SecurityFinding {
             if (findingId == null || findingId.isBlank()) {
@@ -121,6 +123,27 @@ public interface SecurityAgent {
             if (confidenceScore < 0.0 || confidenceScore > 1.0) {
                 throw new IllegalArgumentException("Confidence score must be between 0.0 and 1.0");
             }
+            if (detectionSource == null) {
+                detectionSource = "UNKNOWN";
+            }
+        }
+        
+        // Convenience constructor for backwards compatibility
+        public SecurityFinding(
+            String findingId,
+            Instant detectedAt,
+            Severity severity,
+            String category,
+            String description,
+            String location,
+            String cveId,
+            double confidenceScore,
+            List<String> recommendations,
+            boolean autoRemediationPossible
+        ) {
+            this(findingId, detectedAt, severity, category, description, location, 
+                 cveId, confidenceScore, recommendations, autoRemediationPossible, 
+                 "UNKNOWN", null);
         }
         
         public enum Severity {

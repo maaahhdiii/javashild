@@ -11,11 +11,14 @@ public class FindingDto {
     private double confidence;
     private List<String> recommendations;
     private boolean autoFixAvailable;
+    private String detectionSource;
+    private String fixCode;
     
     public FindingDto() {}
     
     public FindingDto(String id, String category, String description, String severity, 
-                     String location, double confidence, List<String> recommendations, boolean autoFixAvailable) {
+                     String location, double confidence, List<String> recommendations, boolean autoFixAvailable,
+                     String detectionSource, String fixCode) {
         this.id = id;
         this.category = category;
         this.description = description;
@@ -24,6 +27,8 @@ public class FindingDto {
         this.confidence = confidence;
         this.recommendations = recommendations;
         this.autoFixAvailable = autoFixAvailable;
+        this.detectionSource = detectionSource;
+        this.fixCode = fixCode;
     }
     
     public String getId() { return id; }
@@ -49,4 +54,10 @@ public class FindingDto {
     
     public boolean isAutoFixAvailable() { return autoFixAvailable; }
     public void setAutoFixAvailable(boolean autoFixAvailable) { this.autoFixAvailable = autoFixAvailable; }
+    
+    public String getDetectionSource() { return detectionSource; }
+    public void setDetectionSource(String detectionSource) { this.detectionSource = detectionSource; }
+    
+    public String getFixCode() { return fixCode; }
+    public void setFixCode(String fixCode) { this.fixCode = fixCode; }
 }

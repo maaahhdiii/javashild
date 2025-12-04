@@ -19,7 +19,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <tribuo.version>4.3.1</tribuo.version>
         <spotbugs.version>4.8.3</spotbugs.version>
-        <pmd.version>7.0.0</pmd.version>
+        <pmd.version>6.55.0</pmd.version>
         <onnxruntime.version>1.16.3</onnxruntime.version>
         <slf4j.version>2.0.9</slf4j.version>
         <jackson.version>2.16.0</jackson.version>
@@ -161,6 +161,42 @@
             <groupId>org.owasp</groupId>
             <artifactId>dependency-check-core</artifactId>
             <version>9.0.8</version>
+        </dependency>
+
+        <!-- OWASP ZAP Java API for Dynamic Analysis -->
+        <dependency>
+            <groupId>org.zaproxy</groupId>
+            <artifactId>zap-clientapi</artifactId>
+            <version>1.13.0</version>
+        </dependency>
+
+        <!-- JQAssistant for Graph-Based Code Analysis -->
+        <dependency>
+            <groupId>com.buschmais.jqassistant.core</groupId>
+            <artifactId>scanner</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.buschmais.jqassistant.plugin</groupId>
+            <artifactId>java</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.buschmais.jqassistant.core</groupId>
+            <artifactId>store</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+
+        <!-- Neo4j for JQAssistant Graph Database -->
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j</artifactId>
+            <version>5.15.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            <version>5.15.0</version>
         </dependency>
 
         <!-- Java Parser for AST Analysis -->
