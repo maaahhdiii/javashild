@@ -349,45 +349,427 @@ Two buttons:
 
 ---
 
-## 📡 REST API Endpoints
+## 📡 Complete REST API Reference
 
-If you want to use JavaShield programmatically (from other code):
+All endpoints are prefixed with `http://localhost:8080`
 
-### Analyze Code
+### 🔍 Core Analysis Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/security/analyze/code` | POST | Analyze a code snippet for vulnerabilities |
+| `/api/security/analyze/file` | POST | Upload and analyze a Java file |
+| `/api/security/analyze/snippet` | POST | Quick code snippet analysis |
+| `/api/security/analyze/network` | POST | Analyze network request patterns |
+
+#### Analyze Code Snippet
 ```http
-POST http://localhost:8080/api/security/analyze
+POST /api/security/analyze/code
+Content-Type: application/json
 
-Body (JSON):
 {
-  "code": "String q = \"SELECT * FROM users WHERE id=\" + userId;",
+  "code": "String query = \"SELECT * FROM users WHERE id=\" + userId;",
   "filename": "UserService.java"
 }
 ```
 
-### ML-Powered Fix
-```http
-POST http://localhost:8080/api/security/ml-fix
-
-Body (JSON):
+**Response:**
+```json
 {
-  "code": "... your vulnerable code ...",
+  "status": "success",
+  "findings": [
+    {
+      "category": "SQL_INJECTION",
+      "severity": "CRITICAL",
+      "description": "SQL Injection vulnerability detected",
+      "confidence": 0.95,
+      "recommendations": ["Use PreparedStatement"],
+      "autoRemediationPossible": true
+    }
+  ],
+  "totalFindings": 1,
+  "criticalCount": 1,
+  "highCount": 0
+}
+```
+
+---
+
+### 🔧 Auto-Fix Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/security/apply-fix` | POST | Apply pattern-based fixes to code |
+| `/api/security/ml-fix` | POST | Apply ML-powered intelligent fixes |
+
+#### Pattern-Based Fix
+```http
+POST /api/security/apply-fix
+Content-Type: application/json
+
+{
+  "code": "String query = \"SELECT * FROM users WHERE id=\" + userId;",
+  "fixCode": "Use PreparedStatement",
+  "filename": "UserService.java"
+}
+```
+
+#### ML-Powered Fix (AI)
+```http
+POST /api/security/ml-fix
+Content-Type: application/json
+
+{
+  "code": "... vulnerable code ...",
   "filename": "MyClass.java"
 }
 ```
 
-### Get Statistics
-```http
-GET http://localhost:8080/api/security/statistics
+**Response:**
+```json
+{
+  "success": true,
+  "fixedCode": "// Fixed code with security comments...",
+  "fixCount": 3,
+  "confidence": 0.95,
+  "appliedFixes": [
+    {
+      "vulnType": "SQL_INJECTION",
+      "severity": "CRITICAL",
+      "line": 15,
+      "originalCode": "...",
+      "fixedCode": "..."
+    }
+  ],
+  "mlModel": "Tribuo AdaBoost + DL4J Neural Network"
+}
+```
 
-Response:
+---
+
+### 📊 Statistics & Monitoring Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/security/status` | GET | Get system status and agent health |
+| `/api/security/statistics` | GET | Get scan statistics and ML metrics |
+| `/api/security/health` | GET | Health check endpoint |
+| `/api/security/history` | GET | Get analysis history |
+| `/api/security/ml-metrics` | GET | Get detailed ML model metrics |
+
+#### Get Statistics
+```http
+GET /api/security/statistics
+```
+
+**Response:**
+```json
 {
   "totalScans": 150,
   "totalFindings": 342,
+  "threatsBlocked": 28,
+  "agentStats": {
+    "owaspZapConnected": true,
+    "deepLearningEnabled": true,
+    "trainingExamples": 1457
+  },
   "mlMetrics": {
     "modelAccuracy": 0.9555,
+    "vulnerableAccuracy": 0.9899,
+    "safeAccuracy": 0.9821,
     "trainingExamples": 1457
   }
 }
+```
+
+#### Get ML Metrics
+```http
+GET /api/security/ml-metrics
+```
+
+**Response:**
+```json
+{
+  "modelType": "AdaBoost Ensemble",
+  "trainingExamples": 1457,
+  "overallAccuracy": 0.9555,
+  "vulnerableAccuracy": 0.9899,
+  "safeAccuracy": 0.9821,
+  "deepLearningEnabled": true,
+  "dl4jModelTrained": true,
+  "dl4jModelInfo": "DL4J Neural Network [150→256→128→64→4] - 80068 params"
+}
+```
+
+---
+
+### 🧠 Deep Learning (DL4J) Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/security/dl4j/status` | GET | Get DL4J model status and architecture |
+| `/api/security/dl4j/train` | POST | Train the DL4J neural network |
+| `/api/security/dl4j/toggle` | POST | Enable/disable deep learning |
+| `/api/security/dl4j/analyze` | POST | Analyze code with DL4J only |
+
+#### Get DL4J Status
+```http
+GET /api/security/dl4j/status
+```
+
+**Response:**
+```json
+{
+  "enabled": true,
+  "initialized": true,
+  "trained": true,
+  "architecture": "150→256→128→64→4",
+  "parameters": 80068,
+  "modelInfo": "DL4J Neural Network - Trained"
+}
+```
+
+#### Train DL4J Model
+```http
+POST /api/security/dl4j/train
+```
+
+#### Toggle Deep Learning
+```http
+POST /api/security/dl4j/toggle
+Content-Type: application/json
+
+{
+  "enabled": true
+}
+```
+
+#### Analyze with DL4J
+```http
+POST /api/security/dl4j/analyze
+Content-Type: application/json
+
+{
+  "code": "Runtime.getRuntime().exec(userInput);"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "classification": "VULNERABLE",
+  "confidence": 0.92,
+  "vulnerable": true
+}
+```
+
+---
+
+### 🔬 Dynamic Scanner Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/security/scanner/status` | GET | Get available scanners and current mode |
+| `/api/security/scanner/switch` | POST | Switch between MCP/OWASP ZAP |
+| `/api/security/scan/full` | POST | Full application scan (static + dynamic) |
+
+#### Get Scanner Status
+```http
+GET /api/security/scanner/status
+```
+
+**Response:**
+```json
+{
+  "currentMode": "mcp",
+  "owaspZapAvailable": true,
+  "mcpKaliAvailable": true,
+  "scanners": [
+    {
+      "id": "mcp",
+      "name": "MCP Kali Tools",
+      "tools": ["Nmap", "Nikto", "SQLMap", "WPScan"],
+      "active": true
+    },
+    {
+      "id": "owasp",
+      "name": "OWASP ZAP Native",
+      "tools": ["Spider", "Active Scan", "Passive Scan"],
+      "active": false
+    }
+  ]
+}
+```
+
+#### Full Application Scan
+```http
+POST /api/security/scan/full
+Content-Type: application/json
+
+{
+  "targetUrl": "http://localhost:3000",
+  "sourceCode": "... application code ...",
+  "filename": "App.java",
+  "autoFix": true
+}
+```
+
+---
+
+### 📚 Threat Intelligence Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/security/nvd/cve/{cveId}` | GET | Look up CVE details from NVD |
+| `/api/security/nvd/search` | GET | Search CVEs by keyword |
+| `/api/security/misp/search` | POST | Search MISP for IOCs |
+| `/api/security/misp/events` | GET | Get MISP threat events |
+
+#### CVE Lookup
+```http
+GET /api/security/nvd/cve/CVE-2021-44228
+```
+
+**Response:**
+```json
+{
+  "cveId": "CVE-2021-44228",
+  "description": "Apache Log4j2 RCE vulnerability",
+  "severity": "CRITICAL",
+  "cvssScore": 10.0,
+  "nvdUrl": "https://nvd.nist.gov/vuln/detail/CVE-2021-44228"
+}
+```
+
+#### Search MISP
+```http
+POST /api/security/misp/search
+Content-Type: application/json
+
+{
+  "query": "malware"
+}
+```
+
+---
+
+### 🎓 Continuous Learning Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/security/feedback` | POST | Submit feedback for model improvement |
+| `/api/security/retrain` | POST | Trigger manual model retraining |
+
+#### Submit Feedback
+```http
+POST /api/security/feedback
+Content-Type: application/json
+
+{
+  "findingId": "abc123",
+  "correctLabel": "VULNERABLE",
+  "confidence": 0.95,
+  "finding": {
+    "category": "SQL_INJECTION",
+    "severity": "CRITICAL",
+    "description": "SQL Injection detected"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Feedback recorded for continuous learning",
+  "feedbackBufferSize": 25
+}
+```
+
+#### Trigger Retraining
+```http
+POST /api/security/retrain
+```
+
+---
+
+### 🌐 External Monitoring API
+
+For external applications to use JavaShield as a security service.
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/monitor/code` | POST | Analyze code from external app |
+| `/api/monitor/runtime` | POST | Analyze runtime events |
+| `/api/monitor/logs` | POST | Analyze application logs |
+| `/api/monitor/findings/{sessionId}` | GET | Get findings for session |
+| `/api/monitor/subscribe` | POST | Subscribe to security alerts |
+| `/api/monitor/health` | GET | External API health check |
+
+#### Analyze External Code
+```http
+POST /api/monitor/code
+Content-Type: application/json
+
+{
+  "sessionId": "my-app-session-123",
+  "applicationName": "MyApp",
+  "sourceCode": "public class Test { ... }",
+  "language": "java"
+}
+```
+
+#### Subscribe to Alerts
+```http
+POST /api/monitor/subscribe
+Content-Type: application/json
+
+{
+  "sessionId": "my-app-session-123",
+  "webhookUrl": "https://myapp.com/security-alerts",
+  "severityFilter": ["CRITICAL", "HIGH"]
+}
+```
+
+---
+
+### 📝 Quick API Examples (PowerShell)
+
+```powershell
+# Analyze code
+$body = '{"code": "String q = \"SELECT * FROM users WHERE id=\" + id;", "filename": "Test.java"}'
+Invoke-RestMethod -Uri "http://localhost:8080/api/security/analyze/code" -Method POST -Body $body -ContentType "application/json"
+
+# ML-powered fix
+$body = '{"code": "Runtime.getRuntime().exec(cmd);", "filename": "Cmd.java"}'
+Invoke-RestMethod -Uri "http://localhost:8080/api/security/ml-fix" -Method POST -Body $body -ContentType "application/json"
+
+# Get statistics
+Invoke-RestMethod -Uri "http://localhost:8080/api/security/statistics" -Method GET
+
+# Get DL4J status
+Invoke-RestMethod -Uri "http://localhost:8080/api/security/dl4j/status" -Method GET
+```
+
+### 📝 Quick API Examples (cURL)
+
+```bash
+# Analyze code
+curl -X POST http://localhost:8080/api/security/analyze/code \
+  -H "Content-Type: application/json" \
+  -d '{"code": "String q = \"SELECT * FROM users WHERE id=\" + id;", "filename": "Test.java"}'
+
+# ML-powered fix
+curl -X POST http://localhost:8080/api/security/ml-fix \
+  -H "Content-Type: application/json" \
+  -d '{"code": "Runtime.getRuntime().exec(cmd);", "filename": "Cmd.java"}'
+
+# Get statistics
+curl http://localhost:8080/api/security/statistics
+
+# Health check
+curl http://localhost:8080/api/security/health
 ```
 
 ---
