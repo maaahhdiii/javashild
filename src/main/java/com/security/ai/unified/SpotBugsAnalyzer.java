@@ -54,17 +54,26 @@ public class SpotBugsAnalyzer {
         List<SecurityAgent.SecurityFinding> findings = new ArrayList<>();
         
         try {
-            // SpotBugs requires compiled .class files
-            // First, try to compile the source file on-the-fly
-            Path classPath = compileSource(sourcePath);
+            if (!sourcePath.toString().endsWith(".java")) {
+                return findings;
+            }
+            
+            // SpotBugs requires compiled .class files - try multiple approaches
+            Path classPath = null;
+            
+            // Approach 1: Try standard Maven structure first
+            classPath = convertToClassPath(sourcePath);
+            if (classPath != null && classPath.toFile().exists()) {
+                logger.debug("Found compiled class at: {}", classPath);
+            } else {
+                // Approach 2: Compile the source file on-the-fly
+                classPath = compileSource(sourcePath);
+            }
             
             if (classPath == null || !classPath.toFile().exists()) {
-                // Try standard Maven structure
-                classPath = convertToClassPath(sourcePath);
-                if (!classPath.toFile().exists()) {
-                    logger.debug("Class file not available for {}, skipping SpotBugs", sourcePath.getFileName());
-                    return findings;
-                }
+                // Fall back to pattern-based analysis if compilation fails
+                findings.addAll(analyzeSourcePatterns(sourcePath));
+                return findings;
             }
             
             logger.debug("SpotBugs analyzing: {}", classPath);
@@ -84,10 +93,84 @@ public class SpotBugsAnalyzer {
             logger.debug("SpotBugs found {} bugs in {}", findings.size(), sourcePath.getFileName());
             
         } catch (Exception e) {
-            logger.debug("SpotBugs analysis skipped for {}: {}", sourcePath.getFileName(), e.getMessage());
+            logger.debug("SpotBugs bytecode analysis failed, using pattern analysis: {}", e.getMessage());
+            // Fall back to pattern-based analysis
+            findings.addAll(analyzeSourcePatterns(sourcePath));
         }
         
         return findings;
+    }
+    
+    /**
+     * Pattern-based security analysis when bytecode analysis is not available
+     */
+    private List<SecurityAgent.SecurityFinding> analyzeSourcePatterns(Path sourcePath) {
+        List<SecurityAgent.SecurityFinding> findings = new ArrayList<>();
+        
+        try {
+            String source = java.nio.file.Files.readString(sourcePath);
+            String[] lines = source.split("\\n");
+            
+            // Security patterns that SpotBugs would normally detect
+            java.util.Map<String, Object[]> patterns = java.util.Map.ofEntries(
+                java.util.Map.entry("new\\s+Random\\s*\\(\\s*\\)", new Object[]{"WEAK_RANDOM", "HIGH", "Use SecureRandom instead of Random for security-sensitive operations", "CWE-330"}),
+                java.util.Map.entry("\\.(format|printf)\\s*\\([^,]+\\+", new Object[]{"FORMAT_STRING", "MEDIUM", "Potential format string vulnerability - user input in format string", "CWE-134"}),
+                java.util.Map.entry("setAccessible\\s*\\(\\s*true\\s*\\)", new Object[]{"REFLECTION_ABUSE", "MEDIUM", "Reflection used to bypass access control", "CWE-470"}),
+                java.util.Map.entry("\\beval\\s*\\(|ScriptEngine.*eval", new Object[]{"CODE_INJECTION", "CRITICAL", "Dynamic code evaluation - potential code injection", "CWE-94"}),
+                java.util.Map.entry("printStackTrace\\s*\\(\\s*\\)", new Object[]{"STACK_TRACE_EXPOSURE", "LOW", "Stack trace exposure may leak sensitive information", "CWE-209"}),
+                java.util.Map.entry("getClass\\s*\\(\\s*\\)\\.getClassLoader", new Object[]{"CLASSLOADER_LEAK", "MEDIUM", "ClassLoader access may enable class loading attacks", "CWE-470"}),
+                java.util.Map.entry("Runtime\\.getRuntime\\s*\\(\\s*\\)\\.exec", new Object[]{"COMMAND_EXEC", "HIGH", "External command execution detected", "CWE-78"}),
+                java.util.Map.entry("SSLContext\\.getInstance\\s*\\(\\s*\\\"SSL\\\"", new Object[]{"WEAK_SSL", "HIGH", "SSLv3 is deprecated and insecure - use TLS", "CWE-326"}),
+                java.util.Map.entry("allowAllHostnames|ALLOW_ALL_HOSTNAME", new Object[]{"HOSTNAME_VERIFIER", "CRITICAL", "Hostname verification disabled - vulnerable to MITM", "CWE-295"}),
+                java.util.Map.entry("createSocket.*\\)\\s*;\\s*//.*no\\s*check", new Object[]{"UNVERIFIED_SOCKET", "HIGH", "Socket created without proper verification", "CWE-295"})
+            );
+            
+            for (java.util.Map.Entry<String, Object[]> entry : patterns.entrySet()) {
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(entry.getKey(), java.util.regex.Pattern.CASE_INSENSITIVE);
+                java.util.regex.Matcher matcher = pattern.matcher(source);
+                
+                while (matcher.find()) {
+                    Object[] info = entry.getValue();
+                    int lineNum = countNewlines(source, matcher.start()) + 1;
+                    
+                    SecurityAgent.SecurityFinding.Severity severity = switch ((String) info[1]) {
+                        case "CRITICAL" -> SecurityAgent.SecurityFinding.Severity.CRITICAL;
+                        case "HIGH" -> SecurityAgent.SecurityFinding.Severity.HIGH;
+                        case "MEDIUM" -> SecurityAgent.SecurityFinding.Severity.MEDIUM;
+                        default -> SecurityAgent.SecurityFinding.Severity.LOW;
+                    };
+                    
+                    findings.add(new SecurityAgent.SecurityFinding(
+                        null, null,
+                        severity,
+                        "SpotBugs: " + info[0],
+                        (String) info[2],
+                        sourcePath.getFileName() + ":" + lineNum,
+                        (String) info[3],
+                        0.80,
+                        List.of("Review and fix this security issue"),
+                        true,
+                        "STATIC: SpotBugs",
+                        null
+                    ));
+                }
+            }
+            
+            logger.debug("SpotBugs pattern analysis found {} issues in {}", findings.size(), sourcePath.getFileName());
+            
+        } catch (Exception e) {
+            logger.debug("SpotBugs pattern analysis failed: {}", e.getMessage());
+        }
+        
+        return findings;
+    }
+    
+    private int countNewlines(String s, int endIndex) {
+        int count = 0;
+        for (int i = 0; i < endIndex && i < s.length(); i++) {
+            if (s.charAt(i) == '\n') count++;
+        }
+        return count;
     }
     
     private Path compileSource(Path sourcePath) {

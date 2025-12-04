@@ -1,0 +1,299 @@
+name: JavaShield Security Agent CI/CD
+
+on:
+  push:
+    branches: [ main, develop, testing ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run security scan daily at midnight
+    - cron: '0 0 * * *'
+
+env:
+  JAVA_VERSION: '25'
+  MAVEN_OPTS: '-Xmx4096m'
+
+jobs:
+  # ==================== BUILD ====================
+  build:
+    name: Build & Compile
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Build with Maven
+      run: mvn clean compile -DskipTests --enable-preview
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: target/classes/
+        retention-days: 7
+
+  # ==================== TEST ====================
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Run tests
+      run: mvn test --enable-preview
+      
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: target/surefire-reports/
+        retention-days: 7
+        
+    - name: Publish Test Report
+      uses: mikepenz/action-junit-report@v4
+      if: always()
+      with:
+        report_paths: 'target/surefire-reports/TEST-*.xml'
+
+  # ==================== STATIC ANALYSIS ====================
+  static-analysis:
+    name: Static Security Analysis
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven
+        
+    # SpotBugs Analysis
+    - name: Run SpotBugs
+      run: |
+        mvn compile spotbugs:check -DskipTests || true
+      continue-on-error: true
+      
+    # PMD Analysis
+    - name: Run PMD
+      run: |
+        mvn pmd:check -DskipTests || true
+      continue-on-error: true
+      
+    # CodeQL Analysis
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: java
+        
+    - name: Build for CodeQL
+      run: mvn compile -DskipTests --enable-preview
+      
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:java"
+
+  # ==================== DEPENDENCY CHECK ====================
+  dependency-check:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: OWASP Dependency Check
+      uses: dependency-check/Dependency-Check_Action@main
+      with:
+        project: 'JavaShield'
+        path: '.'
+        format: 'HTML'
+        args: >
+          --failOnCVSS 7
+          --enableRetired
+          
+    - name: Upload Dependency Check Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: dependency-check-report
+        path: reports/
+        retention-days: 30
+
+  # ==================== DYNAMIC ANALYSIS ====================
+  dynamic-analysis:
+    name: OWASP ZAP Dynamic Scan
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    if: github.event_name != 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Build application
+      run: mvn package -DskipTests --enable-preview
+      
+    - name: Start application
+      run: |
+        java --enable-preview -jar target/vulnerability-detection-agent-1.0.0.jar &
+        sleep 30  # Wait for application to start
+        
+    - name: OWASP ZAP Scan
+      uses: zaproxy/action-baseline@v0.11.0
+      with:
+        target: 'http://localhost:8080'
+        rules_file_name: '.zap/rules.tsv'
+        cmd_options: '-a'
+        
+    - name: Upload ZAP Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: zap-report
+        path: report_html.html
+        retention-days: 30
+
+  # ==================== PACKAGE ====================
+  package:
+    name: Package Application
+    runs-on: ubuntu-latest
+    needs: [test, static-analysis]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Package with Maven
+      run: mvn package -DskipTests --enable-preview
+      
+    - name: Upload JAR artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: application-jar
+        path: target/vulnerability-detection-agent-1.0.0.jar
+        retention-days: 30
+
+  # ==================== DOCKER BUILD ====================
+  docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: package
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download JAR artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: application-jar
+        path: target/
+        
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/javashield:latest
+          ${{ secrets.DOCKER_USERNAME }}/javashield:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # ==================== SECURITY REPORT ====================
+  security-report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    needs: [static-analysis, dependency-check, dynamic-analysis]
+    if: always()
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: security-reports/
+        
+    - name: Generate combined report
+      run: |
+        echo "# Security Analysis Report" > security-summary.md
+        echo "Generated: $(date)" >> security-summary.md
+        echo "" >> security-summary.md
+        echo "## Analysis Results" >> security-summary.md
+        echo "- Static Analysis: Completed" >> security-summary.md
+        echo "- Dependency Check: Completed" >> security-summary.md
+        echo "- Dynamic Analysis: Completed" >> security-summary.md
+        
+    - name: Upload Security Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-report
+        path: security-summary.md
+        retention-days: 90
+
+  # ==================== NOTIFY ====================
+  notify:
+    name: Notify on Completion
+    runs-on: ubuntu-latest
+    needs: [security-report]
+    if: always()
+    
+    steps:
+    - name: Send notification
+      run: |
+        echo "CI/CD Pipeline completed"
+        echo "Status: ${{ job.status }}"

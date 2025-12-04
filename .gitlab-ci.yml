@@ -1,0 +1,169 @@
+# GitLab CI/CD Configuration for JavaShield Security Agent
+
+image: eclipse-temurin:25-jdk
+
+variables:
+  MAVEN_OPTS: "-Xmx4096m"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end"
+
+cache:
+  paths:
+    - .m2/repository/
+
+stages:
+  - build
+  - test
+  - security
+  - package
+  - docker
+  - deploy
+
+# ==================== BUILD ====================
+build:
+  stage: build
+  script:
+    - mvn $MAVEN_CLI_OPTS compile -DskipTests
+  artifacts:
+    paths:
+      - target/classes/
+    expire_in: 1 hour
+
+# ==================== TEST ====================
+test:
+  stage: test
+  script:
+    - mvn $MAVEN_CLI_OPTS test
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+    paths:
+      - target/surefire-reports/
+    expire_in: 1 week
+
+# ==================== SECURITY SCANS ====================
+spotbugs:
+  stage: security
+  script:
+    - mvn $MAVEN_CLI_OPTS spotbugs:spotbugs -DskipTests || true
+  artifacts:
+    paths:
+      - target/spotbugsXml.xml
+    expire_in: 1 week
+  allow_failure: true
+
+pmd:
+  stage: security
+  script:
+    - mvn $MAVEN_CLI_OPTS pmd:pmd -DskipTests || true
+  artifacts:
+    paths:
+      - target/pmd.xml
+    expire_in: 1 week
+  allow_failure: true
+
+dependency_check:
+  stage: security
+  script:
+    - mvn $MAVEN_CLI_OPTS org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7 || true
+  artifacts:
+    paths:
+      - target/dependency-check-report.html
+      - target/dependency-check-report.xml
+    expire_in: 1 month
+  allow_failure: true
+
+sast:
+  stage: security
+  image: 
+    name: "registry.gitlab.com/gitlab-org/security-products/sast:latest"
+  variables:
+    SAST_JAVA_VERSION: 25
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+secret_detection:
+  stage: security
+  image:
+    name: "registry.gitlab.com/gitlab-org/security-products/secret-detection:latest"
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      secret_detection: gl-secret-detection-report.json
+
+# ==================== PACKAGE ====================
+package:
+  stage: package
+  script:
+    - mvn $MAVEN_CLI_OPTS package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 month
+  only:
+    - main
+    - develop
+    - tags
+
+# ==================== DOCKER ====================
+docker_build:
+  stage: docker
+  image: docker:24
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA -t $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    - main
+    - tags
+
+# ==================== DEPLOY ====================
+deploy_staging:
+  stage: deploy
+  environment:
+    name: staging
+    url: https://staging.javashield.example.com
+  script:
+    - echo "Deploying to staging..."
+    # Add deployment commands
+  only:
+    - develop
+  when: manual
+
+deploy_production:
+  stage: deploy
+  environment:
+    name: production
+    url: https://javashield.example.com
+  script:
+    - echo "Deploying to production..."
+    # Add deployment commands
+  only:
+    - main
+    - tags
+  when: manual
+
+# ==================== SCHEDULED SECURITY SCAN ====================
+nightly_security_scan:
+  stage: security
+  script:
+    - mvn $MAVEN_CLI_OPTS verify -Psecurity-scan
+  only:
+    - schedules
+  artifacts:
+    paths:
+      - target/security-reports/
+    expire_in: 1 month

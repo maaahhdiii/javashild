@@ -468,7 +468,7 @@
         
         .ml-metrics-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 16px;
         }
         
@@ -730,6 +730,34 @@
             50% { opacity: 0.5; }
         }
         
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        /* DL4J Panel Button Hover */
+        #dl4jPanel button:hover {
+            background: rgba(255,255,255,0.35) !important;
+            transform: translateY(-2px);
+        }
+        
         /* Responsive */
         @media (max-width: 1024px) {
             .main-content {
@@ -753,7 +781,13 @@
             }
             
             .ml-metrics-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .ml-metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -771,10 +805,10 @@
                         JavaShield AI
                         <span class="ml-badge">
                             <i class="fas fa-brain"></i>
-                            Tribuo ML Powered
+                            Tribuo + DL4J
                         </span>
                     </h1>
-                    <p>Enterprise Security Analysis with Machine Learning • 94.6% ML Accuracy</p>
+                    <p>Enterprise Security Analysis with ML & Deep Learning • <span id="headerTrainingExamples">1,457</span> Training Examples • <span id="headerAccuracy">95.5%</span> Accuracy</p>
                 </div>
             </div>
             <div class="header-stats">
@@ -787,8 +821,12 @@
                     <span class="stat-label">Threats Blocked</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value" id="mlAccuracy">94.6%</span>
+                    <span class="stat-value" id="mlAccuracy">95.5%</span>
                     <span class="stat-label">ML Accuracy</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="trainingExamplesHeader">1,457</span>
+                    <span class="stat-label">Training Data</span>
                 </div>
                 <div class="status-indicator">
                     <span class="status-dot"></span>
@@ -804,30 +842,155 @@
                 <div>
                     <div class="ml-panel-title">Real-Time ML Intelligence</div>
                     <div style="font-size: 13px; color: var(--gray); margin-top: 4px;">
-                        AdaBoost Ensemble • 840 Training Examples • Continuous Learning Enabled
+                        AdaBoost + DL4J • <span style="color: var(--success);">NVD CVEs</span> + <span style="color: var(--danger);">MISP Threats</span> + <span style="color: var(--warning);">OWASP Top 10</span>
                     </div>
                 </div>
+                <span id="mlEngineBadge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 6px 14px; border-radius: 16px; font-size: 11px; font-weight: 600; color: white; margin-left: auto;">TRIBUO + DL4J</span>
             </div>
             <div class="ml-metrics-grid">
                 <div class="ml-metric">
                     <div class="ml-metric-label">Overall Accuracy</div>
-                    <div class="ml-metric-value" id="mlOverallAccuracy">94.6%</div>
-                    <div class="ml-metric-subtext">AdaBoost ensemble model</div>
+                    <div class="ml-metric-value" id="mlOverallAccuracy">95.5%</div>
+                    <div class="ml-metric-subtext">AdaBoost ensemble</div>
+                </div>
+                <div class="ml-metric">
+                    <div class="ml-metric-label">Training Examples</div>
+                    <div class="ml-metric-value" id="mlTrainingExamples" style="color: var(--ml-accent);">1,457</div>
+                    <div class="ml-metric-subtext">NVD + MISP + OWASP</div>
                 </div>
                 <div class="ml-metric">
                     <div class="ml-metric-label">Vulnerable Detection</div>
-                    <div class="ml-metric-value" id="mlVulnerableAcc">100%</div>
-                    <div class="ml-metric-subtext">Zero false negatives</div>
+                    <div class="ml-metric-value" id="mlVulnerableAcc" style="color: var(--danger);">98.9%</div>
+                    <div class="ml-metric-subtext">197/199 test samples</div>
+                </div>
+                <div class="ml-metric">
+                    <div class="ml-metric-label">Safe Detection</div>
+                    <div class="ml-metric-value" id="mlSafeAcc" style="color: var(--success);">98.2%</div>
+                    <div class="ml-metric-subtext">55/56 test samples</div>
+                </div>
+                <div class="ml-metric">
+                    <div class="ml-metric-label">Suspicious Detection</div>
+                    <div class="ml-metric-value" id="mlSuspiciousAcc" style="color: var(--warning);">72.9%</div>
+                    <div class="ml-metric-subtext">27/37 test samples</div>
                 </div>
                 <div class="ml-metric">
                     <div class="ml-metric-label">Feedback Samples</div>
                     <div class="ml-metric-value" id="mlFeedbackSamples">0</div>
-                    <div class="ml-metric-subtext">Collected for retraining</div>
+                    <div class="ml-metric-subtext">For continuous learning</div>
                 </div>
-                <div class="ml-metric">
-                    <div class="ml-metric-label">Retraining Count</div>
-                    <div class="ml-metric-value" id="mlRetrainingCount">0</div>
-                    <div class="ml-metric-subtext">Automatic every 24h</div>
+            </div>
+            
+            <!-- Training Data Sources -->
+            <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 14px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 20px; font-weight: 700; color: white;">200</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.9);"><i class="fas fa-database"></i> NVD CVEs</div>
+                    <div style="font-size: 9px; color: rgba(255,255,255,0.7); margin-top: 4px;">Log4Shell, Spring4Shell, MOVEit</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); padding: 14px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 20px; font-weight: 700; color: white;">150</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.9);"><i class="fas fa-shield-virus"></i> MISP Threats</div>
+                    <div style="font-size: 9px; color: rgba(255,255,255,0.7); margin-top: 4px;">APT, Ransomware, C2</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 14px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 20px; font-weight: 700; color: white;">120</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.9);"><i class="fas fa-list-ol"></i> OWASP Top 10</div>
+                    <div style="font-size: 9px; color: rgba(255,255,255,0.7); margin-top: 4px;">2023 Categories</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 14px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 20px; font-weight: 700; color: white;">987+</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.9);"><i class="fas fa-code"></i> Code Patterns</div>
+                    <div style="font-size: 9px; color: rgba(255,255,255,0.7); margin-top: 4px;">SQLi, XSS, RCE, SSRF</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DL4J Deep Learning Neural Network Panel -->
+        <div id="dl4jPanel" class="ml-panel" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); margin-bottom: 20px;">
+            <div class="ml-panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 16px; margin-bottom: 16px;">
+                <i class="fas fa-network-wired ml-panel-icon" style="background: rgba(255,255,255,0.2);"></i>
+                <div>
+                    <div class="ml-panel-title" style="color: white;">DL4J Deep Learning Neural Network</div>
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-top: 4px;">
+                        Multi-Layer Perceptron • 150→256→128→64→4 Architecture • Adam Optimizer
+                    </div>
+                </div>
+                <span id="dl4jStatusBadge" style="background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 16px; font-size: 11px; font-weight: 600; color: white; margin-left: auto;">LOADING...</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 20px;">
+                <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 18px; font-weight: 700; color: white;" id="dl4jArchitecture">--</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8);">Architecture</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 18px; font-weight: 700; color: white;" id="dl4jParameters">--</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8);">Parameters</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 18px; font-weight: 700; color: white;" id="dl4jTrained">--</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8);">Trained</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 18px; font-weight: 700; color: white;" id="dl4jEnabled">--</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8);">Status</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 18px; font-weight: 700; color: white;" id="dl4jWeight">60%</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8);">DL4J Weight</div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button onclick="trainDL4J()" id="dl4jTrainBtn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+                    <i class="fas fa-graduation-cap"></i> Train Neural Network
+                </button>
+                <button onclick="toggleDL4J()" id="dl4jToggleBtn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+                    <i class="fas fa-power-off"></i> Toggle DL4J
+                </button>
+                <button onclick="refreshDL4JStatus()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+                    <i class="fas fa-sync-alt"></i> Refresh Status
+                </button>
+            </div>
+        </div>
+
+        <!-- NVD & MISP Threat Intelligence Panels -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <!-- NVD Panel -->
+            <div class="ml-panel" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <div class="ml-panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 12px; margin-bottom: 16px;">
+                    <i class="fas fa-database ml-panel-icon" style="background: rgba(255,255,255,0.2);"></i>
+                    <div>
+                        <div class="ml-panel-title" style="color: white; font-size: 16px;">NVD - National Vulnerability Database</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8);">CVE Lookup & Analysis</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                    <input type="text" id="nvdCveId" placeholder="Enter CVE ID (e.g., CVE-2021-44228)" style="flex: 1; padding: 12px 16px; border: none; border-radius: 10px; font-size: 14px; background: rgba(255,255,255,0.95);">
+                    <button onclick="lookupCVE()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 12px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+                        <i class="fas fa-search"></i> Lookup
+                    </button>
+                </div>
+                <div id="nvdResult" style="background: rgba(0,0,0,0.2); padding: 14px; border-radius: 10px; font-size: 13px; min-height: 80px; color: white;">
+                    <span style="opacity: 0.8;"><i class="fas fa-info-circle"></i> Enter a CVE ID to lookup vulnerability details from NVD</span>
+                </div>
+            </div>
+
+            <!-- MISP Panel -->
+            <div class="ml-panel" style="background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);">
+                <div class="ml-panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 12px; margin-bottom: 16px;">
+                    <i class="fas fa-shield-virus ml-panel-icon" style="background: rgba(255,255,255,0.2);"></i>
+                    <div>
+                        <div class="ml-panel-title" style="color: white; font-size: 16px;">MISP - Threat Intelligence Platform</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8);">IOC Search & Analysis</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                    <input type="text" id="mispQuery" placeholder="Search IOCs (IP, domain, hash...)" style="flex: 1; padding: 12px 16px; border: none; border-radius: 10px; font-size: 14px; background: rgba(255,255,255,0.95);">
+                    <button onclick="searchMISP()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 12px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+                <div id="mispResult" style="background: rgba(0,0,0,0.2); padding: 14px; border-radius: 10px; font-size: 13px; min-height: 80px; color: white;">
+                    <span style="opacity: 0.8;"><i class="fas fa-info-circle"></i> Search for Indicators of Compromise from MISP</span>
                 </div>
             </div>
         </div>
@@ -901,6 +1064,11 @@
                         Website Scan
                         <span class="ml-badge" style="margin-left: 8px;">MCP Kali</span>
                     </button>
+                    <button class="tab-btn" onclick="switchTab('fullScan')" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                        <i class="fas fa-shield-virus"></i>
+                        Full Scan
+                        <span class="ml-badge" style="margin-left: 8px; background: rgba(255,255,255,0.2);">NEW</span>
+                    </button>
                 </div>
 
                 <!-- Code Analysis Tab -->
@@ -942,6 +1110,36 @@ public class UserService {
 
                 <!-- Website Scan Tab -->
                 <div id="websiteTab" class="tab-content">
+                    <!-- Scanner Selection -->
+                    <div class="scanner-selection" style="margin-bottom: 24px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
+                        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: white;">
+                            <i class="fas fa-tools"></i>
+                            Dynamic Scanner Mode
+                        </h3>
+                        <div class="scanner-modes" style="display: flex; gap: 16px;">
+                            <div class="scanner-option" style="flex: 1; background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; border: 2px solid transparent;" onclick="switchScanner('mcp')" id="mcpScannerOption">
+                                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                    <i class="fas fa-docker" style="font-size: 24px; margin-right: 12px;"></i>
+                                    <div>
+                                        <h4 style="font-size: 16px; font-weight: 600; margin: 0;">MCP Kali Tools</h4>
+                                        <span class="scanner-badge" id="mcpBadge" style="display: inline-block; padding: 2px 8px; background: rgba(76, 175, 80, 0.3); border-radius: 4px; font-size: 11px; margin-top: 4px;">ACTIVE</span>
+                                    </div>
+                                </div>
+                                <p style="font-size: 13px; margin: 0; opacity: 0.9;">7 security scanners: Nmap, Nikto, Dirb, SQLMap, WPScan, Security Headers, SearchSploit</p>
+                            </div>
+                            <div class="scanner-option" style="flex: 1; background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; border: 2px solid transparent;" onclick="switchScanner('owasp')" id="owaspScannerOption">
+                                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                    <i class="fas fa-shield-alt" style="font-size: 24px; margin-right: 12px;"></i>
+                                    <div>
+                                        <h4 style="font-size: 16px; font-weight: 600; margin: 0;">OWASP ZAP Native</h4>
+                                        <span class="scanner-badge" id="owaspBadge" style="display: inline-block; padding: 2px 8px; background: rgba(158, 158, 158, 0.3); border-radius: 4px; font-size: 11px; margin-top: 4px;">AVAILABLE</span>
+                                    </div>
+                                </div>
+                                <p style="font-size: 13px; margin: 0; opacity: 0.9;">Direct OWASP ZAP API: Spider, Active Scan, Passive Scan, Ajax Spider</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="url-input-section">
                         <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--dark);">
                             <i class="fas fa-crosshairs"></i>
@@ -1021,6 +1219,127 @@ public class UserService {
                                 SearchSploit
                             </h4>
                             <p>Exploit database search</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Full Application Scan Tab (NEW) -->
+                <div id="fullScanTab" class="tab-content" style="display: none;">
+                    <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 24px; border-radius: 12px; color: white; margin-bottom: 24px;">
+                        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">
+                            <i class="fas fa-shield-virus"></i>
+                            Full Application Security Scan
+                        </h3>
+                        <p style="margin: 0; opacity: 0.9;">
+                            Comprehensive scan: Static code analysis + Dynamic runtime testing + Auto-fix suggestions
+                        </p>
+                    </div>
+                    
+                    <!-- Scan Configuration -->
+                    <div class="content-card" style="margin-bottom: 24px;">
+                        <h3 class="card-title" style="margin-bottom: 16px;">
+                            <i class="fas fa-cogs"></i>
+                            Scan Configuration
+                        </h3>
+                        
+                        <!-- Target URL -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--dark);">
+                                <i class="fas fa-globe"></i> Running Application URL (Dynamic Scan)
+                            </label>
+                            <input type="url" 
+                                   id="fullScanTargetUrl" 
+                                   class="url-input" 
+                                   placeholder="http://localhost:3000 or https://myapp.com"
+                                   style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                            <p style="font-size: 12px; color: var(--gray); margin-top: 4px;">
+                                The URL of your running application to test for vulnerabilities
+                            </p>
+                        </div>
+                        
+                        <!-- Source Code -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--dark);">
+                                <i class="fas fa-code"></i> Source Code (Static Scan)
+                            </label>
+                            <textarea id="fullScanSourceCode" 
+                                      class="code-textarea"
+                                      placeholder="Paste your application source code here for static analysis..."
+                                      style="width: 100%; height: 200px; font-family: 'Fira Code', monospace; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 13px;"></textarea>
+                            <p style="font-size: 12px; color: var(--gray); margin-top: 4px;">
+                                Your Java/JavaScript/Python source code to analyze for vulnerabilities
+                            </p>
+                        </div>
+                        
+                        <!-- Options -->
+                        <div style="display: flex; gap: 24px; margin-bottom: 20px;">
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" id="enableAutoFix" checked style="margin-right: 8px; width: 18px; height: 18px;">
+                                <span style="font-weight: 600;">
+                                    <i class="fas fa-magic"></i> Enable Auto-Fix
+                                </span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" id="enableStaticScan" checked style="margin-right: 8px; width: 18px; height: 18px;">
+                                <span style="font-weight: 600;">
+                                    <i class="fas fa-file-code"></i> Static Analysis
+                                </span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" id="enableDynamicScan" checked style="margin-right: 8px; width: 18px; height: 18px;">
+                                <span style="font-weight: 600;">
+                                    <i class="fas fa-play-circle"></i> Dynamic Analysis
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <!-- Scanner Selection -->
+                        <div style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 12px; color: var(--dark);">
+                                <i class="fas fa-tools"></i> Dynamic Scanner
+                            </label>
+                            <div style="display: flex; gap: 16px;">
+                                <label style="flex: 1; display: flex; align-items: center; padding: 12px; background: white; border: 2px solid #e1e8ed; border-radius: 8px; cursor: pointer;" id="fullScanMcpOption">
+                                    <input type="radio" name="fullScanScanner" value="mcp" checked style="margin-right: 12px;">
+                                    <div>
+                                        <strong>MCP Kali Tools</strong>
+                                        <p style="margin: 0; font-size: 12px; color: var(--gray);">7 scanners via Docker</p>
+                                    </div>
+                                </label>
+                                <label style="flex: 1; display: flex; align-items: center; padding: 12px; background: white; border: 2px solid #e1e8ed; border-radius: 8px; cursor: pointer;" id="fullScanOwaspOption">
+                                    <input type="radio" name="fullScanScanner" value="owasp" style="margin-right: 12px;">
+                                    <div>
+                                        <strong>OWASP ZAP</strong>
+                                        <p style="margin: 0; font-size: 12px; color: var(--gray);">Native ZAP API</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Start Scan Button -->
+                        <button class="btn" onclick="startFullScan()" 
+                                style="width: 100%; padding: 16px; font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            <i class="fas fa-rocket"></i>
+                            Start Full Security Scan
+                        </button>
+                    </div>
+                    
+                    <!-- Results Section -->
+                    <div id="fullScanResults" style="display: none;">
+                        <!-- Summary Cards -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;" id="fullScanSummary">
+                        </div>
+                        
+                        <!-- Findings -->
+                        <div class="content-card" style="margin-bottom: 24px;" id="fullScanFindings">
+                        </div>
+                        
+                        <!-- Auto-Fixes -->
+                        <div class="content-card" id="fullScanFixes" style="display: none;">
+                        </div>
+                        
+                        <!-- Fixed Code -->
+                        <div class="content-card" id="fullScanFixedCode" style="display: none;">
                         </div>
                     </div>
                 </div>
@@ -1109,6 +1428,7 @@ public class UserService {
         document.addEventListener('DOMContentLoaded', () => {
             setupUploadArea();
             refreshStats();
+            loadScannerStatus(); // Load scanner status on page load
             setInterval(refreshStats, 10000); // Refresh every 10s
         });
 
@@ -1224,14 +1544,19 @@ public class UserService {
             // Count how many findings have fix code
             const fixableCount = data.findings.filter(f => f.fixCode && f.fixCode.trim().length > 0).length;
             
-            // Add "Fix All" button at the top if there are fixable findings
-            const fixAllButton = fixableCount > 0 ? `
-                <div style="margin-bottom: 20px; text-align: right;">
+            // Add "Fix All" buttons at the top if there are findings
+            const fixAllButton = `
+                <div style="margin-bottom: 20px; text-align: right; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="mlPoweredFix()" class="btn-primary" style="background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); padding: 12px 24px; font-size: 16px; font-weight: 600;">
+                        <i class="fas fa-brain"></i> ML-Powered Fix (AI)
+                    </button>
+                    ${fixableCount > 0 ? `
                     <button onclick="fixAllVulnerabilities()" class="btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px 24px; font-size: 16px; font-weight: 600;">
                         <i class="fas fa-magic"></i> Fix All Vulnerabilities (${fixableCount})
                     </button>
+                    ` : ''}
                 </div>
-            ` : '';
+            `;
 
             const findingsHTML = data.findings.map((finding, index) => {
                 const severity = finding.severity.toLowerCase();
@@ -1583,6 +1908,76 @@ public class UserService {
             alert('✓ Fixed code downloaded as: ' + a.download);
         }
 
+        // ML-Powered Fix - Uses AI/ML to detect and fix all vulnerabilities
+        async function mlPoweredFix() {
+            const code = document.getElementById('codeEditor').value;
+            const filename = document.getElementById('filenameInput').value || 'VulnerableCode.java';
+            
+            if (!code || code.trim().length === 0) {
+                alert('Please enter or paste code to fix');
+                return;
+            }
+            
+            if (!confirm('🧠 ML-Powered Fix\n\nThis will use AI/ML models to:\n• Analyze your code for vulnerabilities\n• Generate intelligent fixes\n• Apply all fixes automatically\n\nProceed?')) {
+                return;
+            }
+            
+            try {
+                showNotification('info', 'ML Analysis', 'Running ML-powered vulnerability analysis...');
+                
+                const response = await fetch(`${API_BASE}/ml-fix`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, filename })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show results
+                    let message = `🧠 ML-Powered Fix Complete!\n\n`;
+                    message += `Fixed ${result.fixCount} vulnerabilities\n`;
+                    message += `ML Model: ${result.mlModel}\n`;
+                    message += `Confidence: ${(result.confidence * 100).toFixed(1)}%\n\n`;
+                    
+                    if (result.appliedFixes && result.appliedFixes.length > 0) {
+                        message += `Applied Fixes:\n`;
+                        result.appliedFixes.forEach((fix, i) => {
+                            message += `${i+1}. [${fix.severity}] ${fix.vulnerability} (Line ${fix.line})\n`;
+                        });
+                    }
+                    
+                    // Update code editor with fixed code
+                    document.getElementById('codeEditor').value = result.fixedCode;
+                    
+                    showNotification('success', 'ML Fix Applied', `Fixed ${result.fixCount} vulnerabilities using ML analysis`);
+                    
+                    // Ask to download
+                    if (confirm(message + '\n\nDownload fixed code?')) {
+                        const blob = new Blob([result.fixedCode], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename.replace('.java', '-ML-FIXED.java');
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }
+                    
+                    // Re-analyze to show remaining issues
+                    setTimeout(() => analyzeCode(), 1000);
+                    
+                } else {
+                    showNotification('error', 'ML Fix Failed', result.error || 'Unknown error');
+                }
+                
+            } catch (error) {
+                console.error('ML Fix error:', error);
+                showNotification('error', 'ML Fix Error', error.message);
+            }
+        }
+
         // Fix All Vulnerabilities
         async function fixAllVulnerabilities() {
             if (!currentFindings || currentFindings.length === 0) {
@@ -1605,34 +2000,60 @@ public class UserService {
                 const filename = document.getElementById('filenameInput').value || 'VulnerableCode.java';
                 const originalCode = document.getElementById('codeEditor').value;
 
+                // Show progress
+                showNotification('info', 'Applying Fixes', `Processing ${fixableFindings.length} vulnerabilities...`);
+
                 // Apply fixes sequentially - each fix gets applied to the result of the previous fix
                 let currentCode = originalCode;
                 let appliedFixes = [];
+                let failedFixes = [];
 
                 for (let i = 0; i < fixableFindings.length; i++) {
                     const finding = fixableFindings[i];
                     
-                    // Call backend to apply each fix
-                    const response = await fetch(`${API_BASE}/apply-fix`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            code: currentCode,
-                            fixCode: finding.fixCode,
-                            filename: filename + '.tmp' // Temporary, final save happens after all fixes
-                        })
-                    });
+                    try {
+                        // Call backend to apply each fix
+                        const response = await fetch(`${API_BASE}/apply-fix`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                code: currentCode,
+                                fixCode: finding.fixCode,
+                                filename: filename + '.tmp' // Temporary, final save happens after all fixes
+                            })
+                        });
 
-                    const result = await response.json();
+                        const result = await response.json();
 
-                    if (result.success && result.fixedCode) {
-                        currentCode = result.fixedCode; // Use the fixed code for the next iteration
-                        appliedFixes.push({
+                        if (result.success && result.fixedCode) {
+                            // Only update if the code actually changed
+                            if (result.fixedCode !== currentCode) {
+                                currentCode = result.fixedCode;
+                                appliedFixes.push({
+                                    category: finding.category,
+                                    severity: finding.severity,
+                                    detection: finding.detectionSource,
+                                    line: finding.lineNumber || 'N/A'
+                                });
+                            } else {
+                                // Fix didn't change anything, might need manual review
+                                failedFixes.push({
+                                    category: finding.category,
+                                    reason: 'Pattern not found in code'
+                                });
+                            }
+                        } else {
+                            failedFixes.push({
+                                category: finding.category,
+                                reason: result.error || 'Unknown error'
+                            });
+                        }
+                    } catch (err) {
+                        failedFixes.push({
                             category: finding.category,
-                            severity: finding.severity,
-                            detection: finding.detectionSource
+                            reason: err.message
                         });
                     }
                 }
@@ -1640,11 +2061,21 @@ public class UserService {
                 // Create a summary comment at the top
                 let fixedCodeWithHeader = '/*\n';
                 fixedCodeWithHeader += ' * AUTO-FIXED CODE - JavaShield AI Security Agent\n';
-                fixedCodeWithHeader += ` * Fixed ${appliedFixes.length} vulnerabilities on ${new Date().toLocaleString()}\n`;
+                fixedCodeWithHeader += ` * Fixed ${appliedFixes.length}/${fixableFindings.length} vulnerabilities on ${new Date().toLocaleString()}\n`;
                 fixedCodeWithHeader += ' *\n';
-                appliedFixes.forEach((fix, idx) => {
-                    fixedCodeWithHeader += ` * ${idx + 1}. ${fix.category} (${fix.severity})\n`;
-                });
+                if (appliedFixes.length > 0) {
+                    fixedCodeWithHeader += ' * APPLIED FIXES:\n';
+                    appliedFixes.forEach((fix, idx) => {
+                        fixedCodeWithHeader += ` * ${idx + 1}. [${fix.severity}] ${fix.category} (Line ${fix.line})\n`;
+                    });
+                }
+                if (failedFixes.length > 0) {
+                    fixedCodeWithHeader += ' *\n';
+                    fixedCodeWithHeader += ' * NEEDS MANUAL REVIEW:\n';
+                    failedFixes.forEach((fix, idx) => {
+                        fixedCodeWithHeader += ` * - ${fix.category}: ${fix.reason}\n`;
+                    });
+                }
                 fixedCodeWithHeader += ' */\n\n';
                 fixedCodeWithHeader += currentCode;
 
@@ -1667,17 +2098,33 @@ public class UserService {
                     // Update the editor to show the fixed code
                     document.getElementById('codeEditor').value = fixedCodeWithHeader;
 
-                    alert(`✅ Successfully fixed ${appliedFixes.length} vulnerabilities!\n\n` +
-                          `📁 Saved to: ${finalResult.savedPath}\n\n` +
-                          `The fixed code has been:\n` +
-                          `✓ Saved to your Downloads folder\n` +
-                          `✓ Updated in the web editor\n\n` +
-                          `You can now open the saved file in VS Code to review and use it.`);
+                    let message = `✅ Fixed ${appliedFixes.length}/${fixableFindings.length} vulnerabilities!\n\n`;
+                    message += `📁 Saved to: ${finalResult.savedPath}\n\n`;
+                    
+                    if (appliedFixes.length > 0) {
+                        message += `✓ Applied fixes:\n`;
+                        appliedFixes.forEach((fix, i) => {
+                            message += `  ${i+1}. ${fix.category}\n`;
+                        });
+                    }
+                    
+                    if (failedFixes.length > 0) {
+                        message += `\n⚠️ Needs manual review (${failedFixes.length}):\n`;
+                        failedFixes.forEach((fix, i) => {
+                            message += `  - ${fix.category}\n`;
+                        });
+                    }
+                    
+                    message += `\nThe code has been updated in the editor.`;
+                    
+                    showNotification('success', 'Fixes Applied!', `${appliedFixes.length} vulnerabilities fixed`);
+                    alert(message);
                 } else {
                     alert('Failed to save fixed code: ' + (finalResult.error || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error fixing all vulnerabilities:', error);
+                showNotification('error', 'Fix Failed', error.message);
                 alert('Error applying fixes: ' + error.message);
             }
         }
@@ -1707,12 +2154,27 @@ public class UserService {
                 const mlResponse = await fetch(`${API_BASE}/ml-metrics`);
                 const mlMetrics = await mlResponse.json();
 
-                document.getElementById('mlOverallAccuracy').textContent = 
-                    (mlMetrics.overallAccuracy * 100).toFixed(1) + '%';
-                document.getElementById('mlVulnerableAcc').textContent = 
-                    (mlMetrics.vulnerableAccuracy * 100).toFixed(1) + '%';
+                // Update all ML metrics displays
+                const overallAcc = (mlMetrics.overallAccuracy * 100).toFixed(1) + '%';
+                const vulnAcc = (mlMetrics.vulnerableAccuracy * 100).toFixed(1) + '%';
+                const safeAcc = (mlMetrics.safeAccuracy * 100).toFixed(1) + '%';
+                const suspAcc = (mlMetrics.suspiciousAccuracy * 100).toFixed(1) + '%';
+                
+                document.getElementById('mlOverallAccuracy').textContent = overallAcc;
+                document.getElementById('mlVulnerableAcc').textContent = vulnAcc;
+                document.getElementById('mlSafeAcc').textContent = safeAcc;
+                document.getElementById('mlSuspiciousAcc').textContent = suspAcc;
                 document.getElementById('mlFeedbackSamples').textContent = mlMetrics.feedbackSamples || 0;
-                document.getElementById('mlRetrainingCount').textContent = mlMetrics.retrainingCount || 0;
+                document.getElementById('mlTrainingExamples').textContent = 
+                    (mlMetrics.trainingExamples || 0).toLocaleString();
+                
+                // Update header stats
+                document.getElementById('mlAccuracy').textContent = overallAcc;
+                document.getElementById('trainingExamplesHeader').textContent = 
+                    (mlMetrics.trainingExamples || 0).toLocaleString();
+                document.getElementById('headerAccuracy').textContent = overallAcc;
+                document.getElementById('headerTrainingExamples').textContent = 
+                    (mlMetrics.trainingExamples || 0).toLocaleString();
 
                 // Get health status
                 const healthResponse = await fetch(`${API_BASE}/health`);
@@ -1721,9 +2183,273 @@ public class UserService {
                 document.getElementById('agentStatus').textContent = 
                     health.agent === 'RUNNING' ? 'Agent Running' : 'Agent Offline';
 
+                // Refresh DL4J status
+                await refreshDL4JStatus();
+
             } catch (error) {
                 console.error('Failed to refresh stats:', error);
             }
+        }
+
+        // ================= DL4J DEEP LEARNING FUNCTIONS =================
+        
+        async function refreshDL4JStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/dl4j/status`);
+                const status = await response.json();
+                
+                // Update DL4J panel
+                document.getElementById('dl4jArchitecture').textContent = status.architecture || '150→256→128→64→4';
+                document.getElementById('dl4jParameters').textContent = formatNumber(status.parameters) || '80K';
+                document.getElementById('dl4jTrained').textContent = status.trained ? 'Yes' : 'No';
+                document.getElementById('dl4jEnabled').textContent = status.enabled ? 'Enabled' : 'Disabled';
+                
+                // Update badge
+                const badge = document.getElementById('dl4jStatusBadge');
+                if (status.enabled && status.trained) {
+                    badge.textContent = 'ACTIVE';
+                    badge.style.background = 'rgba(76, 175, 80, 0.4)';
+                } else if (status.enabled) {
+                    badge.textContent = 'READY';
+                    badge.style.background = 'rgba(255, 193, 7, 0.4)';
+                } else {
+                    badge.textContent = 'DISABLED';
+                    badge.style.background = 'rgba(244, 67, 54, 0.4)';
+                }
+                
+                // Update toggle button
+                const toggleBtn = document.getElementById('dl4jToggleBtn');
+                toggleBtn.innerHTML = status.enabled ? 
+                    '<i class="fas fa-pause"></i> Disable DL4J' : 
+                    '<i class="fas fa-play"></i> Enable DL4J';
+                    
+            } catch (error) {
+                console.error('Failed to fetch DL4J status:', error);
+                document.getElementById('dl4jStatusBadge').textContent = 'ERROR';
+                document.getElementById('dl4jStatusBadge').style.background = 'rgba(244, 67, 54, 0.4)';
+            }
+        }
+        
+        async function trainDL4J() {
+            const btn = document.getElementById('dl4jTrainBtn');
+            const originalContent = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Training...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch(`${API_BASE}/dl4j/train`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ epochs: 50 })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('success', 'DL4J Training Complete!', result.message || 'Neural network trained successfully');
+                    await refreshDL4JStatus();
+                } else {
+                    showNotification('error', 'Training Failed', result.error || 'Unknown error occurred');
+                }
+            } catch (error) {
+                console.error('DL4J training failed:', error);
+                showNotification('error', 'Training Failed', error.message);
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+        
+        async function toggleDL4J() {
+            try {
+                const response = await fetch(`${API_BASE}/dl4j/toggle`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('success', 'DL4J Toggled', result.enabled ? 'DL4J is now enabled' : 'DL4J is now disabled');
+                    await refreshDL4JStatus();
+                } else {
+                    showNotification('error', 'Toggle Failed', result.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('DL4J toggle failed:', error);
+                showNotification('error', 'Toggle Failed', error.message);
+            }
+        }
+        
+        function formatNumber(num) {
+            if (!num) return '--';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+        
+        // ================= NVD CVE LOOKUP FUNCTIONS =================
+        
+        async function lookupCVE() {
+            const cveId = document.getElementById('nvdCveId').value.trim();
+            const resultDiv = document.getElementById('nvdResult');
+            
+            if (!cveId) {
+                resultDiv.innerHTML = '<span style="color: #ffcccb;"><i class="fas fa-exclamation-triangle"></i> Please enter a CVE ID</span>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Looking up CVE...';
+            
+            try {
+                // Try NVD API endpoint
+                const response = await fetch(`${API_BASE}/nvd/cve/${encodeURIComponent(cveId)}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        resultDiv.innerHTML = `<span style="color: #ffcccb;"><i class="fas fa-times-circle"></i> ${data.error}</span>`;
+                    } else {
+                        const severity = data.severity || 'UNKNOWN';
+                        const severityColors = {
+                            'CRITICAL': '#ff1744',
+                            'HIGH': '#ff5722',
+                            'MEDIUM': '#ffc107',
+                            'LOW': '#8bc34a',
+                            'UNKNOWN': '#9e9e9e'
+                        };
+                        
+                        resultDiv.innerHTML = `
+                            <div style="margin-bottom: 8px;">
+                                <strong style="font-size: 15px;">${data.cveId || cveId}</strong>
+                                <span style="background: ${severityColors[severity]}; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px; font-weight: 700;">${severity}</span>
+                            </div>
+                            <div style="font-size: 12px; opacity: 0.9; margin-bottom: 6px;">${data.description || 'No description available'}</div>
+                            ${data.cvssScore ? `<div style="font-size: 11px;"><i class="fas fa-chart-bar"></i> CVSS Score: ${data.cvssScore}</div>` : ''}
+                            ${data.publishedDate ? `<div style="font-size: 11px;"><i class="fas fa-calendar"></i> Published: ${data.publishedDate}</div>` : ''}
+                        `;
+                    }
+                } else {
+                    // Fallback: direct NVD API call
+                    resultDiv.innerHTML = `
+                        <div><strong>${cveId}</strong></div>
+                        <div style="font-size: 12px; opacity: 0.8; margin-top: 4px;">
+                            <i class="fas fa-external-link-alt"></i> 
+                            <a href="https://nvd.nist.gov/vuln/detail/${cveId}" target="_blank" style="color: white;">View on NVD Website</a>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('CVE lookup failed:', error);
+                resultDiv.innerHTML = `
+                    <span style="color: #ffcccb;"><i class="fas fa-exclamation-triangle"></i> Lookup failed - ${error.message}</span>
+                    <div style="margin-top: 8px; font-size: 11px;">
+                        <a href="https://nvd.nist.gov/vuln/detail/${cveId}" target="_blank" style="color: white;">
+                            <i class="fas fa-external-link-alt"></i> Try NVD website
+                        </a>
+                    </div>
+                `;
+            }
+        }
+        
+        // ================= MISP THREAT INTELLIGENCE FUNCTIONS =================
+        
+        async function searchMISP() {
+            const query = document.getElementById('mispQuery').value.trim();
+            const resultDiv = document.getElementById('mispResult');
+            
+            if (!query) {
+                resultDiv.innerHTML = '<span style="color: #ffcccb;"><i class="fas fa-exclamation-triangle"></i> Please enter a search query</span>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching MISP...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/misp/search`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        resultDiv.innerHTML = `<span style="color: #ffcccb;"><i class="fas fa-times-circle"></i> ${data.error}</span>`;
+                    } else if (data.results && data.results.length > 0) {
+                        let html = `<div style="margin-bottom: 8px;"><strong>${data.results.length} IOC(s) found</strong></div>`;
+                        data.results.slice(0, 3).forEach(ioc => {
+                            const threatLevel = ioc.threatLevel || 'unknown';
+                            const threatColors = { 'high': '#ff1744', 'medium': '#ffc107', 'low': '#8bc34a', 'unknown': '#9e9e9e' };
+                            html += `
+                                <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 12px;">
+                                    <span style="background: ${threatColors[threatLevel]}; padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 700;">${threatLevel.toUpperCase()}</span>
+                                    <strong style="margin-left: 6px;">${ioc.type || 'indicator'}</strong>: ${ioc.value || query}
+                                </div>
+                            `;
+                        });
+                        resultDiv.innerHTML = html;
+                    } else {
+                        resultDiv.innerHTML = '<span style="color: #a5d6a7;"><i class="fas fa-check-circle"></i> No threats found for this indicator</span>';
+                    }
+                } else {
+                    resultDiv.innerHTML = `
+                        <span><i class="fas fa-info-circle"></i> MISP search for: <strong>${query}</strong></span>
+                        <div style="margin-top: 8px; font-size: 11px; opacity: 0.8;">Configure MISP server in application properties</div>
+                    `;
+                }
+            } catch (error) {
+                console.error('MISP search failed:', error);
+                resultDiv.innerHTML = `
+                    <span><i class="fas fa-info-circle"></i> MISP endpoint not configured</span>
+                    <div style="margin-top: 8px; font-size: 11px; opacity: 0.8;">Add MISP API settings to enable threat intelligence</div>
+                `;
+            }
+        }
+        
+        // ================= NOTIFICATION HELPER =================
+        
+        function showNotification(type, title, message) {
+            const colors = {
+                'success': 'rgba(76, 175, 80, 0.95)',
+                'error': 'rgba(244, 67, 54, 0.95)',
+                'warning': 'rgba(255, 193, 7, 0.95)',
+                'info': 'rgba(33, 150, 243, 0.95)'
+            };
+            const icons = {
+                'success': 'fa-check-circle',
+                'error': 'fa-times-circle',
+                'warning': 'fa-exclamation-triangle',
+                'info': 'fa-info-circle'
+            };
+            
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed; top: 20px; right: 20px; 
+                background: ${colors[type]}; color: white; 
+                padding: 16px 24px; border-radius: 12px; 
+                box-shadow: 0 8px 24px rgba(0,0,0,0.3); 
+                z-index: 10000; 
+                max-width: 400px;
+                animation: slideInRight 0.3s ease;
+            `;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas ${icons[type]}" style="font-size: 24px;"></i>
+                    <div>
+                        <div style="font-weight: 700; font-size: 14px;">${title}</div>
+                        <div style="font-size: 13px; opacity: 0.9; margin-top: 2px;">${message}</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
         }
 
         // Trigger ML Retraining
@@ -1764,20 +2490,37 @@ public class UserService {
                 const metrics = await response.json();
                 
                 const metricsText = `
-ML Model Metrics:
-=================
+╔══════════════════════════════════════════════════════════╗
+║           ML MODEL METRICS - JavaShield AI               ║
+╠══════════════════════════════════════════════════════════╣
 
-Model Type: ${metrics.modelType}
-Training Examples: ${metrics.trainingExamples}
+📊 MODEL INFORMATION
+   • Model Type: ${metrics.modelType}
+   • Training Examples: ${metrics.trainingExamples.toLocaleString()}
+   • Continuous Learning: ${metrics.continuousLearning}
 
-Overall Accuracy: ${(metrics.overallAccuracy * 100).toFixed(2)}%
-Vulnerable Accuracy: ${(metrics.vulnerableAccuracy * 100).toFixed(2)}%
-Safe Accuracy: ${(metrics.safeAccuracy * 100).toFixed(2)}%
-Suspicious Accuracy: ${(metrics.suspiciousAccuracy * 100).toFixed(2)}%
+📈 ACCURACY METRICS
+   • Overall Accuracy: ${(metrics.overallAccuracy * 100).toFixed(2)}%
+   • Vulnerable Detection: ${(metrics.vulnerableAccuracy * 100).toFixed(2)}%
+   • Safe Detection: ${(metrics.safeAccuracy * 100).toFixed(2)}%
+   • Suspicious Detection: ${(metrics.suspiciousAccuracy * 100).toFixed(2)}%
 
-Retraining Count: ${metrics.retrainingCount}
-Feedback Samples: ${metrics.feedbackSamples}
-Continuous Learning: ${metrics.continuousLearning}
+🔄 CONTINUOUS LEARNING
+   • Retraining Count: ${metrics.retrainingCount}
+   • Feedback Samples: ${metrics.feedbackSamples}
+
+🧠 DEEP LEARNING (DL4J)
+   • Status: ${metrics.deepLearningEnabled ? 'Enabled' : 'Disabled'}
+   • Trained: ${metrics.dl4jModelTrained ? 'Yes' : 'No'}
+   • Model: ${metrics.dl4jModelInfo || 'N/A'}
+
+📚 TRAINING DATA SOURCES
+   • 200 NVD CVE patterns (Log4Shell, Spring4Shell, etc.)
+   • 150 MISP threat intelligence patterns
+   • 120 OWASP Top 10 2023 patterns
+   • 987+ vulnerability code patterns
+
+╚══════════════════════════════════════════════════════════╝
                 `;
                 
                 alert(metricsText);
@@ -1824,6 +2567,7 @@ Continuous Learning: ${metrics.continuousLearning}
             // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
+                tab.style.display = 'none';
             });
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -1832,15 +2576,307 @@ Continuous Learning: ${metrics.continuousLearning}
             // Show selected tab
             if (tabName === 'code') {
                 document.getElementById('codeTab').classList.add('active');
+                document.getElementById('codeTab').style.display = 'block';
                 document.querySelectorAll('.tab-btn')[0].classList.add('active');
             } else if (tabName === 'website') {
                 document.getElementById('websiteTab').classList.add('active');
+                document.getElementById('websiteTab').style.display = 'block';
                 document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            } else if (tabName === 'fullScan') {
+                document.getElementById('fullScanTab').classList.add('active');
+                document.getElementById('fullScanTab').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
             }
 
             // Clear results when switching
             document.getElementById('results').innerHTML = '';
             currentFindings = [];
+        }
+        
+        // ================= FULL SCAN FUNCTIONS =================
+        
+        async function startFullScan() {
+            const targetUrl = document.getElementById('fullScanTargetUrl').value;
+            const sourceCode = document.getElementById('fullScanSourceCode').value;
+            const autoFix = document.getElementById('enableAutoFix').checked;
+            const enableStatic = document.getElementById('enableStaticScan').checked;
+            const enableDynamic = document.getElementById('enableDynamicScan').checked;
+            const scanner = document.querySelector('input[name="fullScanScanner"]:checked').value;
+            
+            if (!targetUrl && !sourceCode) {
+                alert('Please provide either a target URL or source code to scan');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('fullScanResults').style.display = 'none';
+            
+            document.querySelector('.loading-text').innerHTML = `
+                <i class="fas fa-shield-virus"></i>
+                Running Full Security Scan...<br>
+                <small style="opacity: 0.8;">
+                    ${enableStatic ? '📋 Static Analysis' : ''} 
+                    ${enableDynamic ? '🌐 Dynamic Testing' : ''} 
+                    ${autoFix ? '🔧 Auto-Fix' : ''}
+                </small>
+            `;
+            
+            try {
+                // Switch scanner if needed
+                if (enableDynamic && scanner !== currentScanner) {
+                    await switchScanner(scanner);
+                }
+                
+                const response = await fetch(`${API_BASE}/scan/full`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        targetUrl: enableDynamic ? targetUrl : null,
+                        sourceCode: enableStatic ? sourceCode : null,
+                        filename: 'application.java',
+                        autoFix: autoFix
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loading').style.display = 'none';
+                
+                if (data.success) {
+                    displayFullScanResults(data);
+                } else {
+                    alert('Scan failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function displayFullScanResults(data) {
+            document.getElementById('fullScanResults').style.display = 'block';
+            
+            // Summary Cards
+            document.getElementById('fullScanSummary').innerHTML = `
+                <div style="background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
+                    <div style="font-size: 32px; font-weight: 700;">${data.totalFindings || 0}</div>
+                    <div style="font-size: 13px; opacity: 0.9;">Total Issues</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
+                    <div style="font-size: 32px; font-weight: 700;">${data.staticFindings || 0}</div>
+                    <div style="font-size: 13px; opacity: 0.9;">Static Findings</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
+                    <div style="font-size: 32px; font-weight: 700;">${data.dynamicFindings || 0}</div>
+                    <div style="font-size: 13px; opacity: 0.9;">Dynamic Findings</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
+                    <div style="font-size: 32px; font-weight: 700;">${data.fixes ? data.fixes.length : 0}</div>
+                    <div style="font-size: 13px; opacity: 0.9;">Fixes Available</div>
+                </div>
+            `;
+            
+            // Findings List
+            let findingsHtml = `
+                <h3 class="card-title" style="margin-bottom: 16px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Security Findings (${data.findings.length})
+                </h3>
+            `;
+            
+            if (data.findings && data.findings.length > 0) {
+                findingsHtml += '<div style="display: flex; flex-direction: column; gap: 12px;">';
+                
+                data.findings.forEach((finding, idx) => {
+                    const severityColors = {
+                        'CRITICAL': '#ff416c',
+                        'HIGH': '#ff4b2b',
+                        'MEDIUM': '#f5a623',
+                        'LOW': '#4a9eff',
+                        'INFO': '#6c757d'
+                    };
+                    const color = severityColors[finding.severity] || '#6c757d';
+                    const isStatic = finding.detectionSource && finding.detectionSource.includes('STATIC');
+                    
+                    findingsHtml += `
+                        <div style="padding: 16px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${color};">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                <div>
+                                    <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">${finding.severity}</span>
+                                    <span style="background: ${isStatic ? '#667eea' : '#11998e'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px;">${isStatic ? 'STATIC' : 'DYNAMIC'}</span>
+                                </div>
+                                <span style="font-size: 12px; color: #666;">${finding.detectionSource || ''}</span>
+                            </div>
+                            <h4 style="margin: 0 0 8px 0; font-size: 15px; color: var(--dark);">${finding.category}</h4>
+                            <p style="margin: 0 0 8px 0; font-size: 13px; color: #555;">${finding.description}</p>
+                            ${finding.location ? `<p style="margin: 0; font-size: 12px; color: #888;"><i class="fas fa-map-marker-alt"></i> ${finding.location}</p>` : ''}
+                            ${finding.recommendations && finding.recommendations.length > 0 ? `
+                                <div style="margin-top: 8px; padding: 8px; background: rgba(76,175,80,0.1); border-radius: 4px;">
+                                    <strong style="font-size: 12px; color: var(--success);"><i class="fas fa-lightbulb"></i> Recommendation:</strong>
+                                    <p style="margin: 4px 0 0 0; font-size: 12px;">${finding.recommendations[0]}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                
+                findingsHtml += '</div>';
+            } else {
+                findingsHtml += '<p style="color: var(--success); text-align: center; padding: 24px;"><i class="fas fa-check-circle" style="font-size: 48px; margin-bottom: 12px; display: block;"></i>No security issues found!</p>';
+            }
+            
+            document.getElementById('fullScanFindings').innerHTML = findingsHtml;
+            
+            // Fixes Section
+            if (data.fixes && data.fixes.length > 0) {
+                document.getElementById('fullScanFixes').style.display = 'block';
+                
+                let fixesHtml = `
+                    <h3 class="card-title" style="margin-bottom: 16px;">
+                        <i class="fas fa-magic"></i>
+                        Auto-Fix Suggestions (${data.fixes.length})
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                `;
+                
+                data.fixes.forEach(fix => {
+                    const isApplied = fix.status === 'APPLIED';
+                    fixesHtml += `
+                        <div style="padding: 16px; background: ${isApplied ? 'rgba(76,175,80,0.1)' : '#f8f9fa'}; border-radius: 8px; border-left: 4px solid ${isApplied ? 'var(--success)' : 'var(--primary)'};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600; color: var(--dark);">${fix.category}</span>
+                                <span style="background: ${isApplied ? 'var(--success)' : 'var(--primary)'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">${fix.status}</span>
+                            </div>
+                            <p style="margin: 0 0 8px 0; font-size: 13px; color: #555;">${fix.description}</p>
+                            ${fix.suggestedFix || fix.fixApplied ? `
+                                <pre style="background: #282c34; color: #abb2bf; padding: 12px; border-radius: 6px; font-size: 12px; overflow-x: auto; white-space: pre-wrap;">${fix.suggestedFix || fix.fixApplied}</pre>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                
+                fixesHtml += '</div>';
+                document.getElementById('fullScanFixes').innerHTML = fixesHtml;
+            }
+            
+            // Fixed Code Section
+            if (data.fixedCode) {
+                document.getElementById('fullScanFixedCode').style.display = 'block';
+                document.getElementById('fullScanFixedCode').innerHTML = `
+                    <h3 class="card-title" style="margin-bottom: 16px;">
+                        <i class="fas fa-check-double"></i>
+                        Fixed Code (${data.fixesApplied || 0} fixes applied)
+                    </h3>
+                    <div style="position: relative;">
+                        <button onclick="copyFixedCode()" style="position: absolute; top: 8px; right: 8px; background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                        <pre id="fixedCodeContent" style="background: #282c34; color: #abb2bf; padding: 16px; border-radius: 8px; font-size: 13px; overflow-x: auto; max-height: 400px; overflow-y: auto;">${escapeHtml(data.fixedCode)}</pre>
+                    </div>
+                `;
+            }
+        }
+        
+        function copyFixedCode() {
+            const code = document.getElementById('fixedCodeContent').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Fixed code copied to clipboard!');
+            });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // ================= END FULL SCAN =================
+        
+        // Scanner state
+        let currentScanner = 'mcp';
+        
+        // Load scanner status on page load
+        async function loadScannerStatus() {
+            try {
+                const response = await fetch('/api/security/scanner/status');
+                const data = await response.json();
+                
+                currentScanner = data.currentMode;
+                updateScannerUI(data);
+            } catch (error) {
+                console.error('Failed to load scanner status:', error);
+            }
+        }
+        
+        // Update scanner UI based on status
+        function updateScannerUI(status) {
+            const mcpOption = document.getElementById('mcpScannerOption');
+            const owaspOption = document.getElementById('owaspScannerOption');
+            const mcpBadge = document.getElementById('mcpBadge');
+            const owaspBadge = document.getElementById('owaspBadge');
+            
+            // Update active states
+            if (status.currentMode === 'mcp') {
+                mcpOption.style.border = '2px solid rgba(255,255,255,0.5)';
+                mcpOption.style.background = 'rgba(255,255,255,0.2)';
+                owaspOption.style.border = '2px solid transparent';
+                owaspOption.style.background = 'rgba(255,255,255,0.1)';
+                
+                mcpBadge.textContent = 'ACTIVE';
+                mcpBadge.style.background = 'rgba(76, 175, 80, 0.3)';
+                owaspBadge.textContent = status.owaspZapAvailable ? 'AVAILABLE' : 'OFFLINE';
+                owaspBadge.style.background = status.owaspZapAvailable ? 'rgba(158, 158, 158, 0.3)' : 'rgba(244, 67, 54, 0.3)';
+            } else {
+                owaspOption.style.border = '2px solid rgba(255,255,255,0.5)';
+                owaspOption.style.background = 'rgba(255,255,255,0.2)';
+                mcpOption.style.border = '2px solid transparent';
+                mcpOption.style.background = 'rgba(255,255,255,0.1)';
+                
+                owaspBadge.textContent = 'ACTIVE';
+                owaspBadge.style.background = 'rgba(76, 175, 80, 0.3)';
+                mcpBadge.textContent = 'AVAILABLE';
+                mcpBadge.style.background = 'rgba(158, 158, 158, 0.3)';
+            }
+        }
+        
+        // Switch scanner mode
+        async function switchScanner(mode) {
+            if (mode === currentScanner) {
+                return; // Already active
+            }
+            
+            try {
+                const response = await fetch('/api/security/scanner/switch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ mode: mode })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentScanner = mode;
+                    // Reload scanner status to update UI
+                    await loadScannerStatus();
+                    
+                    // Show success notification
+                    const notification = document.createElement('div');
+                    notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: rgba(76, 175, 80, 0.95); color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10000; animation: slideInRight 0.3s ease;';
+                    notification.innerHTML = `<i class="fas fa-check-circle"></i> <strong>Switched to ${mode.toUpperCase()}</strong>`;
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 3000);
+                } else {
+                    alert(result.error || 'Failed to switch scanner');
+                }
+            } catch (error) {
+                console.error('Scanner switch error:', error);
+                alert('Failed to switch scanner: ' + error.message);
+            }
         }
 
         // Scan Website
@@ -1866,7 +2902,7 @@ Continuous Learning: ${metrics.continuousLearning}
                     <div class="loading-spinner"></div>
                     <div class="loading-text">
                         <h3><i class="fas fa-radar"></i> Scanning ${targetUrl}</h3>
-                        <p>Running MCP Kali Tools: nmap, nikto, dirb, sqlmap, wpscan, security headers, searchsploit</p>
+                        <p>Using ${currentScanner.toUpperCase()} Scanner: ${currentScanner === 'mcp' ? 'nmap, nikto, dirb, sqlmap, wpscan, security headers, searchsploit' : 'Spider, Active Scan, Passive Scan'}</p>
                         <p style="font-size: 13px; color: var(--gray); margin-top: 8px;">
                             This may take 1-3 minutes depending on the target...
                         </p>

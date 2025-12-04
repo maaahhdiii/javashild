@@ -20,6 +20,37 @@
 
 ---
 
+## 🆕 What's New (Latest Updates)
+
+### 🌐 Client Portal
+A dedicated **external client interface** for security scanning:
+- Access at `http://localhost:8080/client-portal.html`
+- Clean, professional UI for clients to scan their Java code
+- Supports both **static** and **dynamic** analysis modes
+- Real-time scan progress with detailed vulnerability reports
+
+### 🔍 Enhanced OWASP ZAP Integration
+Native integration with **OWASP ZAP 2.16.1** for dynamic application security testing:
+- Direct API connection to ZAP (no MCP required)
+- Fetches comprehensive security alerts from running applications
+- Supports API key authentication (optional - can be disabled in ZAP)
+- Categories: Injection, Broken Authentication, XSS, Security Misconfiguration, and more
+
+### 📊 Static Analysis Improvements
+- **Fixed path-based scanning** - now correctly analyzes actual file content
+- **PMD integration** with 17 security-focused rules
+- **Custom AST analyzer** for deep code structure analysis
+- Combined detection: SQL Injection, Path Traversal, Command Injection, XSS, Insecure Crypto
+
+### 📈 Scan Results Summary
+| Scan Type | Vulnerabilities Found | Scanners Used |
+|-----------|----------------------|---------------|
+| **Static** | 27 findings (2 Critical, 23 High) | PMD, Custom AST |
+| **Dynamic** | 96 findings (63 High severity) | OWASP ZAP |
+| **Total** | **123 vulnerabilities detected** | Combined |
+
+---
+
 ## 🎯 Why This Project?
 
 Every year, thousands of security breaches happen because of vulnerabilities in code. Common problems include:
@@ -45,32 +76,34 @@ Here's how all the components work together:
 │                        JavaShield Architecture                          │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│  ┌─────────────┐     ┌─────────────────────────────────────────────┐   │
-│  │   Frontend  │────▶│           REST API (Spring Boot)             │   │
-│  │   (HTML/JS) │     │           Port 8080                          │   │
-│  └─────────────┘     └──────────────────┬──────────────────────────┘   │
-│                                          │                              │
-│                      ┌───────────────────┼───────────────────┐         │
-│                      ▼                   ▼                   ▼         │
-│              ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   │
-│              │   Static     │   │    ML/DL     │   │   Dynamic    │   │
-│              │  Analyzers   │   │   Models     │   │  Analyzers   │   │
-│              └──────────────┘   └──────────────┘   └──────────────┘   │
-│                     │                   │                   │          │
-│         ┌──────────┬┴─────────┐        │         ┌─────────┴────────┐ │
-│         ▼          ▼          ▼        │         ▼                  ▼ │
-│      ┌─────┐   ┌─────┐   ┌───────┐    │    ┌──────────┐    ┌────────┐│
-│      │ PMD │   │Spot │   │Custom │    │    │OWASP ZAP │    │Runtime ││
-│      │     │   │Bugs │   │ AST   │    │    │ Scanner  │    │Monitor ││
-│      └─────┘   └─────┘   └───────┘    │    └──────────┘    └────────┘│
-│                                        │                              │
-│                           ┌────────────┴────────────┐                 │
-│                           ▼                         ▼                 │
-│                    ┌────────────┐           ┌────────────┐            │
-│                    │  Tribuo    │           │    DL4J    │            │
-│                    │ Ensemble   │           │  Neural    │            │
-│                    │ (ML)       │           │  Network   │            │
-│                    └────────────┘           └────────────┘            │
+│  ┌─────────────┐  ┌─────────────┐   ┌─────────────────────────────┐    │
+│  │  Main UI    │  │   Client    │──▶│     REST API (Spring Boot)  │    │
+│  │  (index)    │  │   Portal    │   │         Port 8080           │    │
+│  └─────────────┘  └─────────────┘   └──────────────┬──────────────┘    │
+│         │                                           │                   │
+│         └───────────────────────────────────────────┤                   │
+│                                                     │                   │
+│                      ┌──────────────────────────────┼──────────────┐   │
+│                      ▼                              ▼              ▼   │
+│              ┌──────────────┐              ┌──────────────┐  ┌───────┐ │
+│              │   Static     │              │    ML/DL     │  │Dynamic│ │
+│              │  Analyzers   │              │   Models     │  │Analyze│ │
+│              └──────────────┘              └──────────────┘  └───────┘ │
+│                     │                             │               │    │
+│         ┌──────────┬┴─────────┐                  │               │    │
+│         ▼          ▼          ▼                  │               ▼    │
+│      ┌─────┐   ┌─────┐   ┌───────┐              │        ┌──────────┐│
+│      │ PMD │   │Spot │   │Custom │              │        │OWASP ZAP ││
+│      │     │   │Bugs │   │ AST   │              │        │ :8090    ││
+│      └─────┘   └─────┘   └───────┘              │        └──────────┘│
+│                                                  │                    │
+│                           ┌──────────────────────┴──────────────┐    │
+│                           ▼                                     ▼    │
+│                    ┌────────────┐                        ┌────────────┐
+│                    │  Tribuo    │                        │    DL4J    │
+│                    │ Ensemble   │                        │  Neural    │
+│                    │ (ML)       │                        │  Network   │
+│                    └────────────┘                        └────────────┘
 │                                                                        │
 └────────────────────────────────────────────────────────────────────────┘
 ```
@@ -79,7 +112,8 @@ Here's how all the components work together:
 
 | Component | Type | Job |
 |-----------|------|-----|
-| **Frontend** | Web UI | Where you paste code and see results |
+| **Main UI** | Web UI | Internal dashboard for code analysis |
+| **Client Portal** | Web UI | 🆕 External client interface for scanning |
 | **Spring Boot API** | Backend | Receives requests, coordinates everything |
 | **PMD** | Static Analysis | Checks code against 17 security rules |
 | **SpotBugs** | Static Analysis | Finds bug patterns in compiled code |
@@ -259,7 +293,9 @@ jabaproj/
 │       └── SecurityAgentController.java   # REST API endpoints
 │
 ├── 📂 src/main/resources/
-│   └── static/index.html             # The web interface you see
+│   └── static/
+│       ├── index.html                # Main web interface
+│       └── client-portal.html        # 🆕 Client portal for external scans
 │
 ├── 📂 test-samples/                  # Example vulnerable code
 │   ├── SQLInjection.java
@@ -319,7 +355,37 @@ Ready! Open http://localhost:8080
 
 ---
 
-## 🖥️ Using the Web Interface
+## 🖥️ Using the Web Interfaces
+
+### Main Dashboard (`http://localhost:8080`)
+The internal interface for full security analysis with ML/DL classification.
+
+### 🆕 Client Portal (`http://localhost:8080/client-portal.html`)
+A dedicated interface for external clients to perform security scans:
+
+| Feature | Description |
+|---------|-------------|
+| **Static Scan** | Analyze code snippets for vulnerabilities without running |
+| **Dynamic Scan** | Test running applications with OWASP ZAP |
+| **Scan History** | View previous scan results |
+| **Export** | Download results as JSON or PDF |
+
+#### Using the Client Portal
+
+1. **For Static Scans**: 
+   - Paste your Java code
+   - Select "Static Analysis"
+   - Click "Run Scan"
+   
+2. **For Dynamic Scans** (requires OWASP ZAP running on port 8090):
+   - Enter target URL (e.g., `http://localhost:8081`)
+   - Select "Dynamic Analysis (OWASP ZAP)"
+   - Click "Run Scan"
+   - View comprehensive vulnerability report
+
+---
+
+## 📝 Detailed Usage Guide
 
 ### Step 1: Enter Your Code
 

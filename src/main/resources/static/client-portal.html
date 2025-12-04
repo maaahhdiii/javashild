@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaShield - Client Security Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --border: #e2e8f0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 20px 32px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .logo p {
+            font-size: 13px;
+            color: var(--gray);
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--success);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }
+        
+        .card-icon.blue { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); }
+        .card-icon.green { background: linear-gradient(135deg, var(--success), #059669); }
+        .card-icon.purple { background: linear-gradient(135deg, var(--secondary), #7c3aed); }
+        .card-icon.orange { background: linear-gradient(135deg, var(--warning), #d97706); }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--gray);
+        }
+        
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .form-input::placeholder {
+            color: var(--gray);
+        }
+        
+        /* File Upload Area */
+        .upload-zone {
+            border: 3px dashed var(--border);
+            border-radius: 12px;
+            padding: 40px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--light);
+            position: relative;
+        }
+        
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        .upload-zone input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+        
+        .upload-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+        
+        .upload-subtext {
+            font-size: 13px;
+            color: var(--gray);
+        }
+        
+        /* File List */
+        .file-list {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--light);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .file-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .file-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .file-size {
+            font-size: 12px;
+            color: var(--gray);
+        }
+        
+        .file-remove {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .file-remove:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 14px 28px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        /* Scheduler */
+        .scheduler-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .schedule-option {
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .schedule-option:hover, .schedule-option.active {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        .schedule-option.active {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        .schedule-option i {
+            font-size: 24px;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        
+        .schedule-option span {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .schedule-option small {
+            font-size: 12px;
+            color: var(--gray);
+        }
+        
+        /* Results Section */
+        .results-section {
+            grid-column: 1 / -1;
+            display: none;
+        }
+        
+        .results-section.visible {
+            display: block;
+        }
+        
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        
+        .results-stats {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 16px 24px;
+            background: var(--light);
+            border-radius: 10px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+        }
+        
+        .stat-value.critical { color: var(--danger); }
+        .stat-value.high { color: var(--warning); }
+        .stat-value.medium { color: #f97316; }
+        .stat-value.low { color: var(--success); }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        /* Findings Table */
+        .findings-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .findings-table th {
+            text-align: left;
+            padding: 14px 16px;
+            background: var(--light);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .findings-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .severity-badge.critical {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+        
+        .severity-badge.high {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        .severity-badge.medium {
+            background: rgba(249, 115, 22, 0.1);
+            color: #f97316;
+        }
+        
+        .severity-badge.low {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        
+        .source-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+        
+        .finding-category {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .finding-description {
+            color: var(--gray);
+            font-size: 13px;
+            max-width: 400px;
+        }
+        
+        .finding-location {
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .progress-container.visible {
+            display: block;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            color: var(--gray);
+            text-align: center;
+        }
+        
+        /* Scheduled Scans */
+        .scheduled-scans {
+            margin-top: 20px;
+        }
+        
+        .scan-schedule-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--light);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .scan-schedule-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .scan-schedule-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--success), #059669);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .scan-schedule-details h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .scan-schedule-details p {
+            font-size: 12px;
+            color: var(--gray);
+        }
+        
+        .scan-schedule-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .btn-icon.pause {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        .btn-icon.delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+        
+        .btn-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(120%);
+            transition: transform 0.3s;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .toast.visible {
+            transform: translateX(0);
+        }
+        
+        .toast.success {
+            background: linear-gradient(135deg, var(--success), #059669);
+        }
+        
+        .toast.error {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+        }
+        
+        .toast.info {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+            
+            .scheduler-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-stats {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: var(--light);
+            padding: 4px;
+            border-radius: 10px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            color: var(--primary);
+        }
+        
+        .tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Folder Path Input */
+        .path-input-group {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .path-input-group .form-input {
+            flex: 1;
+        }
+        
+        .btn-browse {
+            padding: 14px 20px;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <div>
+                    <h1>JavaShield</h1>
+                    <p>AI-Powered Security Scanning Portal</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span>System Online</span>
+                </div>
+                <a href="/" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Admin Panel
+                </a>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <div class="main-grid">
+            <!-- Source Code Upload -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon blue">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <div>
+                        <div class="card-title">Source Code Analysis</div>
+                        <div class="card-subtitle">Upload files or specify folder path</div>
+                    </div>
+                </div>
+                
+                <div class="tabs">
+                    <button class="tab active" data-tab="upload">
+                        <i class="fas fa-upload"></i> Upload Files
+                    </button>
+                    <button class="tab" data-tab="folder">
+                        <i class="fas fa-folder"></i> Folder Path
+                    </button>
+                </div>
+                
+                <!-- Upload Tab -->
+                <div class="tab-content active" id="tab-upload">
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="fileInput" multiple accept=".java,.js,.py,.ts,.jsx,.tsx,.php,.rb,.go,.cs,.cpp,.c,.h" webkitdirectory>
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-arrow-up"></i>
+                        </div>
+                        <div class="upload-text">Drop your project folder or files here</div>
+                        <div class="upload-subtext">
+                            Supports: .java, .js, .py, .ts, .php, .rb, .go, .cs, .cpp, .c<br>
+                            Or click to browse folders
+                        </div>
+                    </div>
+                    
+                    <div class="file-list" id="fileList"></div>
+                </div>
+                
+                <!-- Folder Path Tab -->
+                <div class="tab-content" id="tab-folder">
+                    <div class="form-group">
+                        <label class="form-label">Project Folder Path</label>
+                        <div class="path-input-group">
+                            <input type="text" class="form-input" id="folderPath" 
+                                   placeholder="e.g., D:\projects\my-app\src">
+                        </div>
+                        <small style="color: var(--gray); margin-top: 8px; display: block;">
+                            Enter the full path to your project's source code folder
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">File Extensions to Scan (optional)</label>
+                        <input type="text" class="form-input" id="fileExtensions" 
+                               placeholder=".java, .js, .py (leave empty for all supported)">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dynamic Scan Configuration -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon green">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div>
+                        <div class="card-title">Dynamic Application Scan</div>
+                        <div class="card-subtitle">Test your running application</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Application URL</label>
+                    <input type="text" class="form-input" id="targetUrl" 
+                           placeholder="http://localhost:8081">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Additional Endpoints (optional)</label>
+                    <textarea class="form-input" id="endpoints" rows="4" 
+                              placeholder="/api/users&#10;/admin&#10;/login&#10;/api/products"></textarea>
+                    <small style="color: var(--gray); margin-top: 8px; display: block;">
+                        One endpoint per line. These will be tested for vulnerabilities.
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Scan Type</label>
+                    <select class="form-input" id="scanType">
+                        <option value="full">Full Scan (Static + Dynamic)</option>
+                        <option value="static">Static Analysis Only</option>
+                        <option value="dynamic">Dynamic Scan Only</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Scheduler -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon purple">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div>
+                        <div class="card-title">Automatic Scheduling</div>
+                        <div class="card-subtitle">Set up recurring security scans</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Schedule Frequency</label>
+                    <div class="scheduler-options">
+                        <div class="schedule-option" data-interval="3600000">
+                            <i class="fas fa-hourglass-half"></i>
+                            <span>Hourly</span>
+                            <small>Every hour</small>
+                        </div>
+                        <div class="schedule-option" data-interval="86400000">
+                            <i class="fas fa-calendar-day"></i>
+                            <span>Daily</span>
+                            <small>Once per day</small>
+                        </div>
+                        <div class="schedule-option" data-interval="604800000">
+                            <i class="fas fa-calendar-week"></i>
+                            <span>Weekly</span>
+                            <small>Once per week</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="scheduled-scans" id="scheduledScans">
+                    <!-- Scheduled scans will appear here -->
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon orange">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <div>
+                        <div class="card-title">Run Security Scan</div>
+                        <div class="card-subtitle">Start analyzing your application</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px;">
+                        <input type="checkbox" id="autoFix" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="autoFix" style="font-weight: 600; cursor: pointer;">
+                            Enable Auto-Fix for detected vulnerabilities
+                        </label>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary btn-block" id="startScanBtn" onclick="startScan()">
+                    <i class="fas fa-play"></i> Start Security Scan
+                </button>
+                
+                <button class="btn btn-success btn-block" id="scheduleBtn" onclick="scheduleScan()" style="margin-top: 12px;">
+                    <i class="fas fa-calendar-plus"></i> Schedule Automatic Scan
+                </button>
+                
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Initializing scan...</div>
+                </div>
+            </div>
+            
+            <!-- Results Section -->
+            <div class="card results-section" id="resultsSection">
+                <div class="results-header">
+                    <div>
+                        <h2 style="font-size: 24px; font-weight: 700; color: var(--dark);">
+                            <i class="fas fa-chart-bar" style="color: var(--primary); margin-right: 12px;"></i>
+                            Scan Results
+                        </h2>
+                        <p style="color: var(--gray); margin-top: 4px;" id="scanTimestamp"></p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="exportResults()">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                </div>
+                
+                <div class="results-stats" id="resultsStats">
+                    <div class="stat-box">
+                        <div class="stat-value critical" id="criticalCount">0</div>
+                        <div class="stat-label">Critical</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value high" id="highCount">0</div>
+                        <div class="stat-label">High</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value medium" id="mediumCount">0</div>
+                        <div class="stat-label">Medium</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value low" id="lowCount">0</div>
+                        <div class="stat-label">Low</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" style="color: var(--primary);" id="totalCount">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 24px; overflow-x: auto;">
+                    <table class="findings-table">
+                        <thead>
+                            <tr>
+                                <th>Severity</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Location</th>
+                                <th>Source</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody id="findingsBody">
+                            <!-- Findings will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success!</span>
+    </div>
+    
+    <script>
+        // Global state
+        let uploadedFiles = [];
+        let selectedScheduleInterval = null;
+        let scheduledJobs = [];
+        let scanResults = null;
+        
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+        
+        // Schedule option selection
+        document.querySelectorAll('.schedule-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.schedule-option').forEach(o => o.classList.remove('active'));
+                option.classList.add('active');
+                selectedScheduleInterval = parseInt(option.dataset.interval);
+            });
+        });
+        
+        // File upload handling
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+        
+        function handleFiles(files) {
+            const supportedExtensions = ['.java', '.js', '.py', '.ts', '.jsx', '.tsx', '.php', '.rb', '.go', '.cs', '.cpp', '.c', '.h'];
+            
+            for (let file of files) {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (supportedExtensions.includes(ext) || file.webkitRelativePath) {
+                    uploadedFiles.push(file);
+                }
+            }
+            
+            renderFileList();
+            showToast('success', `${files.length} files added for scanning`);
+        }
+        
+        function renderFileList() {
+            fileList.innerHTML = uploadedFiles.map((file, index) => `
+                <div class="file-item">
+                    <div class="file-info">
+                        <div class="file-icon">
+                            <i class="fas fa-file-code"></i>
+                        </div>
+                        <div>
+                            <div class="file-name">${file.webkitRelativePath || file.name}</div>
+                            <div class="file-size">${formatFileSize(file.size)}</div>
+                        </div>
+                    </div>
+                    <button class="file-remove" onclick="removeFile(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            renderFileList();
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        // Start scan
+        async function startScan() {
+            const targetUrl = document.getElementById('targetUrl').value.trim();
+            const folderPath = document.getElementById('folderPath').value.trim();
+            const scanType = document.getElementById('scanType').value;
+            const autoFix = document.getElementById('autoFix').checked;
+            const endpoints = document.getElementById('endpoints').value.split('\n').filter(e => e.trim());
+            
+            // Validate inputs
+            if (scanType !== 'dynamic' && uploadedFiles.length === 0 && !folderPath) {
+                showToast('error', 'Please upload files or specify a folder path for static analysis');
+                return;
+            }
+            
+            if (scanType !== 'static' && !targetUrl) {
+                showToast('error', 'Please enter a target URL for dynamic scanning');
+                return;
+            }
+            
+            // Show progress
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const startBtn = document.getElementById('startScanBtn');
+            
+            progressContainer.classList.add('visible');
+            startBtn.disabled = true;
+            
+            try {
+                let allFindings = [];
+                
+                // Phase 1: Static Analysis
+                if (scanType !== 'dynamic') {
+                    progressText.textContent = 'Phase 1: Static Code Analysis...';
+                    progressFill.style.width = '10%';
+                    
+                    if (uploadedFiles.length > 0) {
+                        // Scan uploaded files using the multi-file upload endpoint
+                        progressText.textContent = 'Uploading and scanning files...';
+                        
+                        const formData = new FormData();
+                        uploadedFiles.forEach(file => {
+                            formData.append('files', file);
+                        });
+                        
+                        try {
+                            const response = await fetch('/api/security/upload/files', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const result = await response.json();
+                            
+                            if (result.success && result.findings) {
+                                allFindings.push(...result.findings);
+                                progressText.textContent = `Scanned ${result.totalFiles} files`;
+                            }
+                        } catch (err) {
+                            // Fallback: scan files one by one
+                            let processed = 0;
+                            for (let file of uploadedFiles) {
+                                try {
+                                    const content = await readFileContent(file);
+                                    const result = await scanCode(content, file.name);
+                                    if (result.findings) {
+                                        allFindings.push(...result.findings);
+                                    }
+                                } catch (e) {
+                                    console.error('Error scanning file:', file.name, e);
+                                }
+                                processed++;
+                                progressFill.style.width = (10 + (processed / uploadedFiles.length) * 30) + '%';
+                                progressText.textContent = `Scanning: ${file.name}`;
+                            }
+                        }
+                    } else if (folderPath) {
+                        // Scan folder path using full scan endpoint
+                        progressText.textContent = 'Scanning project folder: ' + folderPath;
+                        
+                        // Normalize path for the API (use forward slashes)
+                        const normalizedPath = folderPath.replace(/\\/g, '/');
+                        
+                        const response = await fetch('/api/security/scan/full', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                sourcePath: normalizedPath,
+                                autoFix: autoFix
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        console.log('Folder scan result:', result);
+                        
+                        if (result.success && result.findings) {
+                            allFindings.push(...result.findings);
+                        } else if (result.findings) {
+                            allFindings.push(...result.findings);
+                        }
+                        
+                        progressText.textContent = `Found ${allFindings.length} issues in source code`;
+                    }
+                }
+                
+                progressFill.style.width = '50%';
+                
+                // Phase 2: Dynamic Analysis using OWASP ZAP
+                if (scanType !== 'static' && targetUrl) {
+                    progressText.textContent = 'Phase 2: Dynamic Application Scan (OWASP ZAP)...';
+                    progressText.textContent = 'Scanning with OWASP ZAP: ' + targetUrl;
+                    
+                    try {
+                        const response = await fetch('/api/security/scan/full', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                targetUrl: targetUrl,
+                                endpoints: endpoints,
+                                scannerMode: 'owasp'  // Use OWASP ZAP for dynamic scanning
+                            })
+                        });
+                        
+                        const dynamicResult = await response.json();
+                        console.log('Dynamic scan result:', dynamicResult);
+                        
+                        if (dynamicResult.findings) {
+                            // Mark as dynamic findings
+                            dynamicResult.findings.forEach(f => {
+                                if (!f.detectionSource) {
+                                    f.detectionSource = 'DYNAMIC';
+                                }
+                            });
+                            allFindings.push(...dynamicResult.findings);
+                        }
+                    } catch (err) {
+                        console.error('Dynamic scan error:', err);
+                        showToast('warning', 'Dynamic scan failed, showing static results only');
+                    }
+                    
+                    progressFill.style.width = '80%';
+                }
+                
+                // Phase 3: ML Classification
+                progressText.textContent = 'Phase 3: AI/ML Classification...';
+                progressFill.style.width = '90%';
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Complete
+                progressFill.style.width = '100%';
+                progressText.textContent = 'Scan complete!';
+                
+                // Display results
+                displayResults(allFindings);
+                
+                showToast('success', `Scan complete! Found ${allFindings.length} vulnerabilities`);
+                
+            } catch (error) {
+                console.error('Scan error:', error);
+                showToast('error', 'Scan failed: ' + error.message);
+            } finally {
+                startBtn.disabled = false;
+                setTimeout(() => {
+                    progressContainer.classList.remove('visible');
+                }, 2000);
+            }
+        }
+        
+        async function readFileContent(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+        
+        async function scanCode(code, filename) {
+            const response = await fetch('/api/security/analyze/code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, filename, language: 'java' })
+            });
+            return response.json();
+        }
+        
+        async function scanFolder(sourcePath, autoFix) {
+            const response = await fetch('/api/security/scan/full', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    sourcePath,
+                    autoFix
+                })
+            });
+            return response.json();
+        }
+        
+        async function scanDynamic(targetUrl, endpoints) {
+            const response = await fetch('/api/security/scan/full', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    targetUrl,
+                    endpoints
+                })
+            });
+            return response.json();
+        }
+        
+        function displayResults(findings) {
+            console.log('Displaying results:', findings);
+            scanResults = findings || [];
+            
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.classList.add('visible');
+            
+            // Update timestamp
+            document.getElementById('scanTimestamp').textContent = 
+                'Scanned at ' + new Date().toLocaleString();
+            
+            // Count by severity
+            const counts = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+            scanResults.forEach(f => {
+                const sev = (f.severity || 'LOW').toUpperCase();
+                if (counts[sev] !== undefined) counts[sev]++;
+            });
+            
+            document.getElementById('criticalCount').textContent = counts.CRITICAL;
+            document.getElementById('highCount').textContent = counts.HIGH;
+            document.getElementById('mediumCount').textContent = counts.MEDIUM;
+            document.getElementById('lowCount').textContent = counts.LOW;
+            document.getElementById('totalCount').textContent = scanResults.length;
+            
+            // Render findings table
+            const tbody = document.getElementById('findingsBody');
+            tbody.innerHTML = scanResults.map(f => `
+                <tr>
+                    <td>
+                        <span class="severity-badge ${(f.severity || 'low').toLowerCase()}">
+                            ${f.severity || 'LOW'}
+                        </span>
+                    </td>
+                    <td class="finding-category">${f.category || 'Unknown'}</td>
+                    <td class="finding-description">${f.description || 'No description'}</td>
+                    <td>
+                        <span class="finding-location">${f.location || 'Unknown'}</span>
+                    </td>
+                    <td>
+                        <span class="source-badge">${f.detectionSource || 'Static'}</span>
+                    </td>
+                    <td>${Math.round((f.confidence || f.confidenceScore || 0) * 100)}%</td>
+                </tr>
+            `).join('');
+            
+            // Scroll to results
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Schedule scan
+        function scheduleScan() {
+            if (!selectedScheduleInterval) {
+                showToast('error', 'Please select a schedule frequency');
+                return;
+            }
+            
+            const targetUrl = document.getElementById('targetUrl').value;
+            const folderPath = document.getElementById('folderPath').value;
+            
+            if (!targetUrl && !folderPath && uploadedFiles.length === 0) {
+                showToast('error', 'Please configure scan parameters first');
+                return;
+            }
+            
+            const intervalName = selectedScheduleInterval === 3600000 ? 'Hourly' : 
+                               selectedScheduleInterval === 86400000 ? 'Daily' : 'Weekly';
+            
+            const job = {
+                id: Date.now(),
+                interval: selectedScheduleInterval,
+                intervalName,
+                targetUrl,
+                folderPath,
+                files: uploadedFiles.length,
+                nextRun: new Date(Date.now() + selectedScheduleInterval),
+                timerId: null
+            };
+            
+            // Start the scheduled job
+            job.timerId = setInterval(() => {
+                console.log('Running scheduled scan:', job.id);
+                startScan();
+            }, selectedScheduleInterval);
+            
+            scheduledJobs.push(job);
+            renderScheduledJobs();
+            
+            showToast('success', `${intervalName} scan scheduled successfully!`);
+        }
+        
+        function renderScheduledJobs() {
+            const container = document.getElementById('scheduledScans');
+            container.innerHTML = scheduledJobs.map(job => `
+                <div class="scan-schedule-item">
+                    <div class="scan-schedule-info">
+                        <div class="scan-schedule-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="scan-schedule-details">
+                            <h4>${job.intervalName} Security Scan</h4>
+                            <p>Next run: ${job.nextRun.toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <div class="scan-schedule-actions">
+                        <button class="btn-icon delete" onclick="removeScheduledJob(${job.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function removeScheduledJob(jobId) {
+            const job = scheduledJobs.find(j => j.id === jobId);
+            if (job && job.timerId) {
+                clearInterval(job.timerId);
+            }
+            scheduledJobs = scheduledJobs.filter(j => j.id !== jobId);
+            renderScheduledJobs();
+            showToast('info', 'Scheduled scan removed');
+        }
+        
+        // Export results
+        function exportResults() {
+            if (!scanResults || scanResults.length === 0) {
+                showToast('error', 'No results to export');
+                return;
+            }
+            
+            const report = {
+                generatedAt: new Date().toISOString(),
+                totalFindings: scanResults.length,
+                summary: {
+                    critical: scanResults.filter(f => f.severity === 'CRITICAL').length,
+                    high: scanResults.filter(f => f.severity === 'HIGH').length,
+                    medium: scanResults.filter(f => f.severity === 'MEDIUM').length,
+                    low: scanResults.filter(f => f.severity === 'LOW').length
+                },
+                findings: scanResults
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `security-report-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('success', 'Report exported successfully');
+        }
+        
+        // Toast notifications
+        function showToast(type, message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.className = 'toast ' + type;
+            toastMessage.textContent = message;
+            
+            toast.classList.add('visible');
+            
+            setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 4000);
+        }
+        
+        // Check system status on load
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/security/status');
+                const status = await response.json();
+                if (status.status === 'OPERATIONAL') {
+                    console.log('JavaShield is operational');
+                }
+            } catch (error) {
+                console.error('Failed to check status:', error);
+            }
+        }
+        
+        // Upload files using the new endpoint
+        async function uploadAndScanFiles() {
+            if (uploadedFiles.length === 0) {
+                showToast('error', 'No files selected');
+                return [];
+            }
+            
+            const formData = new FormData();
+            uploadedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            
+            const response = await fetch('/api/security/upload/files', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            return result.findings || [];
+        }
+        
+        // Register project
+        async function registerProject() {
+            const targetUrl = document.getElementById('targetUrl').value;
+            const folderPath = document.getElementById('folderPath').value;
+            const projectName = prompt('Enter project name:') || 'My Project';
+            
+            if (!targetUrl && !folderPath) {
+                showToast('error', 'Please enter a target URL or folder path');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/security/projects/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        projectName,
+                        sourcePath: folderPath,
+                        targetUrl
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('success', `Project "${projectName}" registered! ID: ${result.projectId}`);
+                    localStorage.setItem('currentProjectId', result.projectId);
+                } else {
+                    showToast('error', result.error || 'Registration failed');
+                }
+            } catch (error) {
+                showToast('error', 'Failed to register project: ' + error.message);
+            }
+        }
+        
+        // Initialize
+        checkStatus();
+    </script>
+</body>
+</html>

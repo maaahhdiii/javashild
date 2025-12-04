@@ -36,15 +36,23 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
     
     // ML Models
     private EnsembleModel<Label> unifiedModel;
+    private DeepLearningSecurityModel deepLearningModel;
     private final LabelFactory labelFactory = new LabelFactory();
+    
+    // Deep Learning mode
+    private boolean useDeepLearning = true;  // Enable DL4J by default
     
     // Analysis Components
     private final PMDAnalyzer pmdAnalyzer;
     private final SpotBugsAnalyzer spotBugsAnalyzer;
     private final CustomASTAnalyzer astAnalyzer;
     private final JQAssistantAnalyzer jqAssistantAnalyzer;
-    private final OWASPZAPScanner zapScanner;
+    private final OWASPZAPScanner mcpKaliScanner;  // MCP Kali Tools Scanner
+    private final OwaspZapNativeScanner owaspZapScanner;  // Native OWASP ZAP Scanner
     private final RuntimeBehaviorMonitor runtimeMonitor;
+    
+    // Scanner mode: "mcp" or "owasp"
+    private String dynamicScannerMode = "mcp"; // Default to MCP
     
     // Feature extraction and training
     private final UnifiedFeatureExtractor featureExtractor;
@@ -69,6 +77,13 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
     private final AtomicInteger retrainingCount = new AtomicInteger(0);
     private volatile long lastRetrainedAt = 0; // Track last analysis count when retrained
     
+    // Training metrics - dynamically updated during training
+    private volatile int trainingExamples = 0;
+    private volatile double overallAccuracy = 0.0;
+    private volatile double vulnerableAccuracy = 0.0;
+    private volatile double safeAccuracy = 0.0;
+    private volatile double suspiciousAccuracy = 0.0;
+    
     public UnifiedMLSecurityAgent() {
         super();
         
@@ -77,17 +92,21 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
         this.spotBugsAnalyzer = new SpotBugsAnalyzer();
         this.astAnalyzer = new CustomASTAnalyzer();
         this.jqAssistantAnalyzer = new JQAssistantAnalyzer();
-        this.zapScanner = new OWASPZAPScanner();
+        this.mcpKaliScanner = new OWASPZAPScanner();  // MCP Kali Tools
+        this.owaspZapScanner = new OwaspZapNativeScanner();  // Native OWASP ZAP
         this.runtimeMonitor = new RuntimeBehaviorMonitor();
         
         // Feature extraction and training
         this.featureExtractor = new UnifiedFeatureExtractor();
         this.trainingDataset = new VulnerabilityTrainingDataset();
         
+        // Initialize Deep Learning model (DL4J)
+        this.deepLearningModel = new DeepLearningSecurityModel();
+        
         // Thread pool for parallel analysis
         this.analysisExecutor = Executors.newVirtualThreadPerTaskExecutor();
         
-        logger.info("UnifiedMLSecurityAgent initialized with all analysis components");
+        logger.info("UnifiedMLSecurityAgent initialized with all analysis components (including DL4J)");
     }
     
     @Override
@@ -116,8 +135,16 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
         jqAssistantAnalyzer.initialize();
         logger.info("✓ JQAssistant Analyzer ready");
         
-        zapScanner.initialize();
-        logger.info("✓ OWASP ZAP Scanner initialized");
+        // Initialize both scanners
+        mcpKaliScanner.initialize();
+        logger.info("✓ MCP Kali Tools Scanner initialized");
+        
+        owaspZapScanner.initialize();
+        if (owaspZapScanner.isConnected()) {
+            logger.info("✓ OWASP ZAP Native Scanner initialized");
+        } else {
+            logger.warn("⚠ OWASP ZAP not available (ensure ZAP is running on localhost:8090)");
+        }
         
         runtimeMonitor.start();
         logger.info("✓ Runtime Behavior Monitor started");
@@ -135,14 +162,31 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
         // Step 3: Training dataset ready (generates on-demand)
         logger.info("Step 3: Vulnerability training dataset ready (840 labeled examples)");
         
-        // Step 4: Start continuous learning scheduler
-        logger.info("Step 4: Starting continuous learning scheduler...");
+        // Step 4: Initialize Deep Learning model (DL4J)
+        logger.info("Step 4: Initializing Deep Learning model (DL4J)...");
+        if (useDeepLearning) {
+            try {
+                deepLearningModel.initialize();
+                logger.info("✓ DL4J Deep Learning model initialized");
+            } catch (Exception e) {
+                logger.warn("DL4J initialization failed (fallback to Tribuo): {}", e.getMessage());
+                useDeepLearning = false;
+            }
+        }
+        
+        // Step 5: Start continuous learning scheduler
+        logger.info("Step 5: Starting continuous learning scheduler...");
         startContinuousLearning();
         
         logger.info("✓ Unified ML Security Agent ready!");
-        logger.info("  - ML Model: Ensemble (Logistic Regression + Random Forest + AdaBoost)");
+        logger.info("  - ML Models: {} + Ensemble (Logistic Regression + AdaBoost)", 
+            useDeepLearning ? "DL4J Neural Network" : "Tribuo Only");
         logger.info("  - Static Analyzers: PMD, SpotBugs, Custom AST, JQAssistant");
-        logger.info("  - Dynamic Analyzers: MCP Kali Tools, Runtime Monitor");
+        logger.info("  - Dynamic Analyzers: {} (MCP Kali Tools{}, OWASP ZAP Native{}), Runtime Monitor", 
+            dynamicScannerMode.toUpperCase(),
+            dynamicScannerMode.equals("mcp") ? " [ACTIVE]" : "",
+            owaspZapScanner.isConnected() && dynamicScannerMode.equals("owasp") ? " [ACTIVE]" : 
+            owaspZapScanner.isConnected() ? " [AVAILABLE]" : " [OFFLINE]");
         logger.info("=".repeat(80));
         
         status.set(AgentStatus.RUNNING);
@@ -284,8 +328,14 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
         if (event.type() == SecurityEvent.EventType.NETWORK_REQUEST && event.payload() instanceof DynamicAnalysisAgent.NetworkRequestInfo netInfo) {
             logger.info("Running dynamic analysis on network request: {}", netInfo.host());
             
-            // OWASP ZAP scanning
-            allFindings.addAll(zapScanner.scanTarget(netInfo));
+            // Dynamic scanning based on mode
+            if ("owasp".equalsIgnoreCase(dynamicScannerMode) && owaspZapScanner.isConnected()) {
+                logger.info("Using OWASP ZAP Native Scanner");
+                allFindings.addAll(owaspZapScanner.scanTarget(netInfo));
+            } else {
+                logger.info("Using MCP Kali Tools Scanner");
+                allFindings.addAll(mcpKaliScanner.scanTarget(netInfo));
+            }
             
             // Runtime behavior monitoring
             allFindings.addAll(runtimeMonitor.analyzeNetworkRequest(netInfo));
@@ -345,6 +395,9 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
                 return;
             }
             
+            // Store actual training examples count
+            this.trainingExamples = fullDataset.size();
+            
             logger.info("Loaded {} labeled examples", fullDataset.size());
             
             // Step 2: Manual train/test split (80/20)
@@ -395,7 +448,13 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
             evaluateModel(lrModel, testDataset);
             
             logger.info("  AdaBoost:");
-            evaluateModel(adaModel, testDataset);
+            Map<String, Double> adaMetrics = evaluateModelWithMetrics(adaModel, testDataset);
+            
+            // Store accuracy metrics from AdaBoost (primary model)
+            this.overallAccuracy = adaMetrics.getOrDefault("accuracy", 0.0);
+            this.vulnerableAccuracy = adaMetrics.getOrDefault("VULNERABLE", 0.0);
+            this.safeAccuracy = adaMetrics.getOrDefault("SAFE", 0.0);
+            this.suspiciousAccuracy = adaMetrics.getOrDefault("SUSPICIOUS", 0.0);
             
             // Step 5: Use AdaBoost as primary model (typically better)
             this.unifiedModel = (EnsembleModel<Label>) adaModel;
@@ -411,6 +470,14 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
      * Evaluate model performance on test set
      */
     private void evaluateModel(Model<Label> model, Dataset<Label> testSet) {
+        evaluateModelWithMetrics(model, testSet);
+    }
+    
+    /**
+     * Evaluate model and return metrics map
+     */
+    private Map<String, Double> evaluateModelWithMetrics(Model<Label> model, Dataset<Label> testSet) {
+        Map<String, Double> metrics = new HashMap<>();
         try {
             // Make predictions on test set
             List<Prediction<Label>> predictions = model.predict(testSet);
@@ -434,6 +501,7 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
             }
             
             double accuracy = (double) correct / total;
+            metrics.put("accuracy", accuracy);
             logger.info("    Accuracy: {}/{} ({:.2%})", correct, total, accuracy);
             
             // Per-class accuracy
@@ -441,6 +509,7 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
                 int classCorrect = perClassCorrect.getOrDefault(label, 0);
                 int classTotal = perClassTotal.get(label);
                 double classAcc = (double) classCorrect / classTotal;
+                metrics.put(label, classAcc);
                 logger.info("    {} accuracy: {}/{} ({:.2%})", 
                     label, classCorrect, classTotal, classAcc);
             }
@@ -448,11 +517,12 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
         } catch (Exception e) {
             logger.error("Error evaluating model", e);
         }
+        return metrics;
     }
     
     /**
      * Enhance security finding with ML-based classification
-     * Uses trained Tribuo model to predict vulnerability likelihood
+     * Uses trained Tribuo model AND DL4J deep learning for prediction
      */
     private SecurityFinding enhanceWithML(SecurityFinding finding) {
         try {
@@ -478,7 +548,7 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
                 featureValues
             );
             
-            // Get ML prediction
+            // Get Tribuo ML prediction
             Prediction<Label> prediction = unifiedModel.predict(example);
             Label predictedLabel = prediction.getOutput();
             
@@ -487,6 +557,31 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
             double mlConfidence = distribution.containsKey(predictedLabel.getLabel()) 
                 ? distribution.get(predictedLabel.getLabel()).getScore() 
                 : 0.5;
+            
+            // === Deep Learning Enhancement ===
+            String dlPrediction = null;
+            double dlConfidence = 0.0;
+            if (useDeepLearning && deepLearningModel != null && deepLearningModel.isModelTrained()) {
+                try {
+                    // Get code snippet for DL analysis
+                    String codeSnippet = finding.description() + " " + finding.location();
+                    DeepLearningSecurityModel.DLPrediction dlResult = deepLearningModel.predict(codeSnippet);
+                    dlPrediction = dlResult.classification();
+                    dlConfidence = dlResult.confidence();
+                    
+                    // Combine DL and Tribuo predictions using weighted average
+                    // DL4J gets higher weight when confidence is high
+                    if (dlConfidence > 0.75) {
+                        mlConfidence = (mlConfidence * 0.4 + dlConfidence * 0.6); // DL4J weighted more
+                        if (dlPrediction.equals("VULNERABLE") && !predictedLabel.getLabel().equals("VULNERABLE")) {
+                            // DL4J detected vulnerability that Tribuo missed - override
+                            predictedLabel = new Label("VULNERABLE");
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.debug("DL4J prediction failed, using Tribuo only: {}", e.getMessage());
+                }
+            }
             
             // Adjust severity based on ML prediction
             SecurityAgent.SecurityFinding.Severity adjustedSeverity = finding.severity();
@@ -508,10 +603,13 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
             // Combine original confidence with ML confidence
             double combinedConfidence = (finding.confidenceScore() + mlConfidence) / 2.0;
             
-            // Create enhanced finding with ML insights
-            String enhancedDescription = finding.description() + 
-                " [ML: " + predictedLabel.getLabel() + " @" + 
+            // Create enhanced finding with ML insights (including DL4J if available)
+            String mlAnnotation = "[ML: " + predictedLabel.getLabel() + " @" + 
                 String.format("%.0f%%", mlConfidence * 100) + "]";
+            if (dlPrediction != null) {
+                mlAnnotation += " [DL4J: " + dlPrediction + " @" + String.format("%.0f%%", dlConfidence * 100) + "]";
+            }
+            String enhancedDescription = finding.description() + " " + mlAnnotation;
             
             return new SecurityAgent.SecurityFinding(
                 finding.findingId(),
@@ -529,7 +627,7 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
             );
             
         } catch (Exception e) {
-            logger.error("Error enhancing finding with ML", e);
+            logger.error("Error enhancing finding with ML", e);;
             return finding;
         }
     }
@@ -549,13 +647,16 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
     }
     
     /**
-     * De-duplicate similar findings
+     * De-duplicate similar findings - keep unique by category+location+description hash
      */
     private List<SecurityFinding> deduplicateFindings(List<SecurityFinding> findings) {
         Map<String, SecurityFinding> uniqueFindings = new LinkedHashMap<>();
         
         for (SecurityFinding finding : findings) {
-            String key = finding.category() + ":" + finding.location();
+            // Create a more specific key that preserves unique findings
+            // Include description hash to differentiate findings at the same location
+            String descHash = String.valueOf(finding.description().hashCode());
+            String key = finding.category() + ":" + finding.location() + ":" + descHash;
             
             if (!uniqueFindings.containsKey(key) || 
                 uniqueFindings.get(key).confidenceScore() < finding.confidenceScore()) {
@@ -563,6 +664,7 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
             }
         }
         
+        logger.debug("Deduplicated {} findings to {} unique findings", findings.size(), uniqueFindings.size());
         return new ArrayList<>(uniqueFindings.values());
     }
     
@@ -789,7 +891,87 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
         stats.put("lastRetrainTime", new Date(lastRetrainTime));
         stats.put("queueSize", eventQueue.size());
         stats.put("cachedFindings", findingsCache.size());
+        stats.put("dynamicScannerMode", dynamicScannerMode);
+        stats.put("owaspZapConnected", owaspZapScanner.isConnected());
+        
+        // Training metrics - dynamically tracked
+        stats.put("trainingExamples", trainingExamples);
+        stats.put("overallAccuracy", overallAccuracy);
+        stats.put("vulnerableAccuracy", vulnerableAccuracy);
+        stats.put("safeAccuracy", safeAccuracy);
+        stats.put("suspiciousAccuracy", suspiciousAccuracy);
+        
+        // Deep Learning stats
+        stats.put("deepLearningEnabled", useDeepLearning);
+        stats.put("dl4jModelTrained", deepLearningModel != null && deepLearningModel.isModelTrained());
+        if (deepLearningModel != null) {
+            stats.put("dl4jModelInfo", deepLearningModel.getModelInfo());
+        }
         return stats;
+    }
+    
+    /**
+     * Set dynamic scanner mode
+     * @param mode "mcp" for MCP Kali Tools or "owasp" for OWASP ZAP Native
+     */
+    public void setDynamicScannerMode(String mode) {
+        if ("mcp".equalsIgnoreCase(mode) || "owasp".equalsIgnoreCase(mode)) {
+            this.dynamicScannerMode = mode.toLowerCase();
+            logger.info("Dynamic scanner mode set to: {}", mode.toUpperCase());
+        } else {
+            logger.warn("Invalid scanner mode: {}. Must be 'mcp' or 'owasp'", mode);
+        }
+    }
+    
+    /**
+     * Get current dynamic scanner mode
+     */
+    public String getDynamicScannerMode() {
+        return dynamicScannerMode;
+    }
+    
+    /**
+     * Enable or disable DL4J deep learning model
+     */
+    public void setDeepLearningEnabled(boolean enabled) {
+        this.useDeepLearning = enabled;
+        logger.info("Deep Learning (DL4J) mode: {}", enabled ? "ENABLED" : "DISABLED");
+    }
+    
+    /**
+     * Check if deep learning is enabled
+     */
+    public boolean isDeepLearningEnabled() {
+        return useDeepLearning;
+    }
+    
+    /**
+     * Get the deep learning model for direct access
+     */
+    public DeepLearningSecurityModel getDeepLearningModel() {
+        return deepLearningModel;
+    }
+    
+    /**
+     * Train the DL4J model with new data
+     */
+    public void trainDeepLearningModel() {
+        if (deepLearningModel != null) {
+            try {
+                // Generate training data from vulnerability dataset
+                List<String[]> trainingData = trainingDataset.generateDLTrainingData();
+                List<String> codeSnippets = new ArrayList<>();
+                List<String> labels = new ArrayList<>();
+                for (String[] sample : trainingData) {
+                    codeSnippets.add(sample[0]);
+                    labels.add(sample[1]);
+                }
+                deepLearningModel.train(codeSnippets, labels);
+                logger.info("DL4J model training completed with {} samples", codeSnippets.size());
+            } catch (Exception e) {
+                logger.error("DL4J model training failed", e);
+            }
+        }
     }
     
     @Override
@@ -819,7 +1001,8 @@ public class UnifiedMLSecurityAgent extends AbstractSecurityAgent {
         }
         
         runtimeMonitor.stop();
-        zapScanner.shutdown();
+        mcpKaliScanner.shutdown();
+        owaspZapScanner.shutdown();
         
         logger.info("Unified ML Security Agent stopped. Final stats: {}", getStatistics());
     }

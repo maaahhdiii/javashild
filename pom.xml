@@ -138,6 +138,19 @@
             <artifactId>onnxruntime</artifactId>
             <version>${onnxruntime.version}</version>
         </dependency>
+        
+        <!-- Deeplearning4j for Deep Learning -->
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-core</artifactId>
+            <version>1.0.0-M2.1</version>
+        </dependency>
+        <!-- ND4J Native backend with all platform dependencies -->
+        <dependency>
+            <groupId>org.nd4j</groupId>
+            <artifactId>nd4j-native-platform</artifactId>
+            <version>1.0.0-M2.1</version>
+        </dependency>
 
         <!-- Static Analysis Tools -->
         <dependency>
